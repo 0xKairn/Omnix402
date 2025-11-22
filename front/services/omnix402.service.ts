@@ -16,7 +16,6 @@ export interface PaymentRequirements {
       name: string;
       version: string;
     };
-    data?: string;
     destNetwork?: string;
   }>;
   error?: string;
@@ -35,7 +34,6 @@ export interface PaymentPayload {
       validAfter: string;
       validBefore: string;
       nonce: string;
-      data: string;
     };
   };
 }
@@ -94,7 +92,6 @@ export class Omnix402Service {
           validAfter: validAfter.toString(),
           validBefore: validBefore.toString(),
           nonce: nonce,
-          data: nonce,
         },
       },
     };

@@ -2,11 +2,7 @@
 
 import { useState } from "react";
 import { useAccount, useSignTypedData } from "wagmi";
-import {
-  Omnix402Service,
-  PaymentRequirements,
-} from "@/services/omnix402.service";
-import { signTypedData } from "@wagmi/core";
+import { Omnix402Service } from "@/services/omnix402.service";
 
 export interface UseOmnix402Return {
   loading: boolean;
@@ -93,7 +89,6 @@ export function useOmnix402(): UseOmnix402Return {
           { name: "validAfter", type: "uint256" },
           { name: "validBefore", type: "uint256" },
           { name: "nonce", type: "bytes32" },
-          { name: "data", type: "bytes32" },
         ],
       };
 
@@ -104,10 +99,9 @@ export function useOmnix402(): UseOmnix402Return {
         validAfter: BigInt(validAfter),
         validBefore: BigInt(validBefore),
         nonce: nonce as `0x${string}`,
-        data: nonce,
       };
 
-      const signature = await signTypedData(config, {
+      const signature = await signTypedDataAsync({
         domain,
         types,
         primaryType: "TransferWithAuthorizationData",
