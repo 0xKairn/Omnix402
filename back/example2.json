@@ -1,0 +1,17 @@
+{
+    "x402Version": 1,
+    "scheme": "exact",
+    "network": "base",
+    "payload": {
+        "signature": "0xe5368697fcf3e59f0850cefd4b1d0734f0cc8430270c73e95cbf71a30d85d4362f3c1c736dc6ca669fc58cf3aa86492e82805f3b777250c2947e6c95840d1c0c1b",
+        "authorization": {
+            "from": "0xA4fF19143D9B9D4c881BbddA33F3BF7e5bd802d8",
+            "to": "0x66FA4D79cA84016b42352BE33C908Dd812952Ec8",
+            "value": "10000",
+            "validAfter": "1763817759",
+            "validBefore": "1763818659",
+            "nonce": "0x09faee3adef4268ca65348cfa8f5593ca78bfae91bc6aa54af7868cbab3dec49",
+            "data": "0x"
+        }
+    }
+}

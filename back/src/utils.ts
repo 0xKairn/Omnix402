@@ -1,6 +1,7 @@
 import chalk from 'chalk';
 import { ethers } from 'ethers';
 import dotenv from 'dotenv';
+import { networkDetail, NETWORKS_DETAILS, PacketData } from './const';
 
 dotenv.config();
 
@@ -18,4 +19,84 @@ export function logInfo(message: string) {
 
 export function logWarning(message: string) {
     console.log(chalk.yellow.bold('[WARNING]') + ' ' + chalk.yellow(message));
+}
+
+export async function checkIfDestHasEnoughUSDC(
+    networkDetail: networkDetail,
+    amount: string
+): Promise<boolean> {
+    try {
+        const provider = new ethers.providers.JsonRpcProvider(networkDetail.rpcUrl);
+        const usdoContract = new ethers.Contract(
+            networkDetail.USDOAddress,
+            [
+                'function balanceOf(address owner) view returns (uint256)'
+            ],
+            provider
+        );
+
+        const balance: ethers.BigNumber = await usdoContract.balanceOf(networkDetail.payementReceiver);
+        const amountBN = ethers.BigNumber.from(amount);
+
+        return balance.gte(amountBN);
+    } catch (error) {
+        logError(`Error checking USDO balance: ${error}`);
+        return false;
+    }
+}
+
+export function decodePacket(encodedPayload: string): PacketData {
+    const data = ethers.utils.arrayify(encodedPayload)
+    const version = data[0]
+    if (version !== 1) {
+        throw new Error(`Unsupported packet version: ${version}`)
+    }
+    let offset = 1
+
+    const nonceBytes = data.slice(offset, offset + 8)
+    const nonce = BigInt('0x' + Buffer.from(nonceBytes).toString('hex'))
+    offset += 8
+
+    const srcEidBytes = data.slice(offset, offset + 4)
+    const srcEid = parseInt(Buffer.from(srcEidBytes).toString('hex'), 16)
+    offset += 4
+
+    const senderBytes = data.slice(offset, offset + 32)
+    const sender = '0x' + Buffer.from(senderBytes).toString('hex')
+    offset += 32
+
+    const dstEidBytes = data.slice(offset, offset + 4)
+    const dstEid = parseInt(Buffer.from(dstEidBytes).toString('hex'), 16)
+    offset += 4
+
+    const receiverBytes = data.slice(offset, offset + 32)
+    const receiver = '0x' + Buffer.from(receiverBytes).toString('hex')
+    offset += 32
+
+    const guidBytes = data.slice(offset, offset + 32)
+    const guid = '0x' + Buffer.from(guidBytes).toString('hex')
+    offset += 32
+
+    const messageBytes = data.slice(offset)
+    const message = '0x' + Buffer.from(messageBytes).toString('hex')
+
+    return {
+        nonce,
+        srcEid,
+        sender,
+        dstEid,
+        receiver: '0x' + receiver.slice(-40),
+        guid,
+        message,
+    }
+}
+
+export function getChainNameById(chainId: number): string {
+    for (const [networkName, details] of Object.entries(NETWORKS_DETAILS)) {
+        if (details.chainId === chainId) {
+            return networkName;
+        }
+    }
+
+    return 'unknown';
 }
