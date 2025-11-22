@@ -220,9 +220,16 @@ export default function SwapUSDO() {
             </span>
           </div>
           <input
-            type="number"
+            type="text"
+            inputMode="decimal"
             value={amount}
-            onChange={(e) => setAmount(e.target.value)}
+            onChange={(e) => {
+              const value = e.target.value;
+              // Allow only numbers and one decimal point
+              if (value === "" || /^\d*\.?\d*$/.test(value)) {
+                setAmount(value);
+              }
+            }}
             placeholder="0.00"
             className="w-full bg-black border border-white/20 px-4 py-3 text-white font-mono focus:border-white focus:outline-none transition-colors"
           />
