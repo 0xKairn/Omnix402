@@ -8,11 +8,13 @@ export const WALLET = new ethers.Wallet(process.env.PRIVATE_KEY || '');
 export const AUTHORIZED_NETWORKS = ['base', 'polygon']
 
 export type networkDetail = {
+    name: string,
     rpcUrl: string, chainId: number, payementReceiver: string, USDOAddress: string, OmnixRouterAddress: string, OmnixDVNAddress: string, OmnixExecutorAddress: string,
     ReceiveULN302Address: string
 };
 export const NETWORKS_DETAILS: { [key: string]: networkDetail } = {
     base: {
+        name: 'base',
         rpcUrl: 'https://base-mainnet.public.blastapi.io',
         chainId: 8453,
         payementReceiver: '0x0187523c9b2583B52c5Ca407b68A369F1a560F1B', // Replace with actual address
@@ -23,6 +25,7 @@ export const NETWORKS_DETAILS: { [key: string]: networkDetail } = {
         ReceiveULN302Address: '0xc70AB6f32772f59fBfc23889Caf4Ba3376C84bAf' // Replace with actual Receive ULN302 contract address
     },
     polygon: {
+        name: 'polygon',
         rpcUrl: 'https://polygon-rpc.com',
         chainId: 137,
         payementReceiver: '0x0187523c9b2583B52c5Ca407b68A369F1a560F1B', // Replace with actual address
@@ -39,6 +42,8 @@ export const EXTRA_USDO = {
     "version": "1"
 }
 
+export const RECEIVE_WITH_AUTHORIZATION_TYPEHASH = "0xd099cc98ef71107a616c4f0f941f04c322d8e254fe26b3c6668db87aae413de8";
+export const USDC_DOMAIN_SEPARATOR = "0x02fa7265e7c5d81118673727957699e4d68f74cd74b7db77da710fe8a2c7834f";
 
 export type x402Payload = {
     x402Version: number,
@@ -53,7 +58,7 @@ export type x402Payload = {
             validAfter: string,
             validBefore: string,
             nonce: string,
-            data: string,
+            data?: string,
         }
     }
 }
