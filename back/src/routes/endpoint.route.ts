@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { checkIfDestHasEnoughUSDC, decodePacket, getChainNameById, logError, logInfo } from "../utils";
+import { buildTransferAuthorizationDigest, checkIfDestHasEnoughUSDC, decodePacket, getChainNameById, logError, logInfo } from "../utils";
 import { ethers } from "ethers";
 import { AUTHORIZED_NETWORKS, EXTRA_USDO, networkDetail, NETWORKS_DETAILS, PacketData, WALLET, x402Payload } from "../const";
 import usdoABI from "../abis/usdo.abi.json";
@@ -49,11 +49,11 @@ export class EndpointRoute {
 
             const sourceAccept = body.accepts[0];
 
-            const destNetworkDetails = NETWORKS_DETAILS[body.accepts[0].network];
+            const destNetworkDetails = NETWORKS_DETAILS[sourceAccept.network];
 
             const hasEnoughUSDC = await checkIfDestHasEnoughUSDC(
                 destNetworkDetails,
-                body.accepts[0].amount
+                sourceAccept.amount
             );
 
             if (!hasEnoughUSDC) {
@@ -66,7 +66,7 @@ export class EndpointRoute {
                 payTo: destNetworkDetails.USDOAddress,        // override
                 asset: destNetworkDetails.USDOAddress,        // override
                 extra: EXTRA_USDO,                             // override
-                destNetwork: body.accepts[0].network
+                destNetwork: sourceAccept.network
             };
 
             body.accepts.push(newAccept);
@@ -76,10 +76,11 @@ export class EndpointRoute {
                 [
                     destNetworkDetails.OmnixRouterAddress,
                     ethers.utils.defaultAbiCoder.encode(
-                        ['uint256', 'address'],
+                        ['uint256', 'address', 'address'],
                         [
                             destNetworkDetails.chainId,
-                            destNetworkDetails.payementReceiver
+                            destNetworkDetails.payementReceiver,
+                            sourceAccept.payTo
                         ]
                     )
                 ]
@@ -89,6 +90,7 @@ export class EndpointRoute {
                 ...body
             });
         } catch (error) {
+            console.log(error);
             logError(`Error fetching endpoint requirements: ${error}`);
             res.status(500).json({ error: 'Internal Server Error' });
         }
@@ -96,7 +98,7 @@ export class EndpointRoute {
     }
 
     private processx402Call = async (req: any, res: any) => {
-        const body = req.body;
+        const { endpoint } = req.query;
         try {
             const payload = req.headers['x-payment'];
 
@@ -104,14 +106,19 @@ export class EndpointRoute {
             const decodedPayload = Buffer.from(payload, 'base64').toString('utf-8');
             const payloadJson = JSON.parse(decodedPayload) as x402Payload;
 
+            if (!payloadJson.payload.authorization.data) {
+                logError(`Missing authorization data in payload`);
+                return res.status(400).json({ error: 'Invalid payload: missing authorization data' });
+            }
+
             const [omnixRouterAddress, innerBytes] =
                 ethers.utils.defaultAbiCoder.decode(
                     ['address', 'bytes'],
                     payloadJson.payload.authorization.data
                 );
-            const [destChainId, paymentReceiver] =
+            const [destChainId, paymentReceiver, endpointReceiver] =
                 ethers.utils.defaultAbiCoder.decode(
-                    ['uint256', 'address'],
+                    ['uint256', 'address', 'address'],
                     innerBytes
                 );
 
@@ -125,6 +132,8 @@ export class EndpointRoute {
                 sourceProvider
             );
 
+            const { v, r, s } = ethers.utils.splitSignature(payloadJson.payload.signature);
+
             const data = await sourceUSDOContract.populateTransaction.transferWithAuthorization(
                 payloadJson.payload.authorization.from,
                 payloadJson.payload.authorization.to,
@@ -132,7 +141,8 @@ export class EndpointRoute {
                 payloadJson.payload.authorization.validAfter,
                 payloadJson.payload.authorization.validBefore,
                 payloadJson.payload.authorization.nonce,
-                payloadJson.payload.authorization.data
+                payloadJson.payload.authorization.data,
+                v, r, s
             );
 
             const tx = {
@@ -144,7 +154,6 @@ export class EndpointRoute {
 
             const gas = await sourceProvider.estimateGas(tx);
 
-
             const signedTx = await WALLET.signTransaction({
                 ...tx,
                 gasLimit: gas
@@ -152,10 +161,6 @@ export class EndpointRoute {
 
             const txResponse = await sourceProvider.sendTransaction(signedTx);
             const receipt = await txResponse.wait();
-
-            // decrypt receipt to get the data log and get any PacketSent event
-
-            //
 
             const ENDPOINT_ABI = ['event PacketSent(bytes encodedPayload, bytes options, address sendLibrary)']
 
@@ -180,13 +185,76 @@ export class EndpointRoute {
                 return res.status(500).json({ error: 'Internal Server Error' });
             }
 
-            await this.processPacket(destNetworkDetails, packetSentEventData, receipt.transactionHash);
+            try {
+                await this.processPacket(destNetworkDetails, packetSentEventData, receipt.transactionHash);
+
+                const responsePayload = await this.buildResponsePayload(payloadJson, destNetworkDetails, endpointReceiver);
+
+                const base64Payload = Buffer.from(JSON.stringify(responsePayload)).toString('base64');
+
+                const response = await fetch(endpoint, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Payment': base64Payload
+                    },
+                });
+
+                const responseBody = await response.json();
+                const xPaymentResponse = response.headers.get('X-Payment-Response');
+
+                res.setHeader('X-Payment-Response', xPaymentResponse);
+
+                res.status(200).json(responseBody);
+            } catch (error) {
+                console.log(error);
+                res.status(500).json({ error: 'Internal Server Error during bridge' });
+            }
 
         } catch (error) {
             logError(`Error processing x402 call: ${error}`);
             res.status(500).json({ error: 'Internal Server Error' });
         }
     }
+
+    async buildResponsePayload(
+        originalPayload: x402Payload,
+        destNetworkDetails: networkDetail,
+        endpointReceiver: string
+    ): Promise<x402Payload> {
+        const now = new Date();
+        const nonce = ethers.utils.hexlify(ethers.utils.randomBytes(32));
+
+        const digest = buildTransferAuthorizationDigest(
+            WALLET.address,
+            endpointReceiver,
+            originalPayload.payload.authorization.value,
+            Math.floor(now.getTime() / 1000),
+            Math.floor((now.getTime() / 1000) + 3600),
+            nonce
+        )
+        const signature = await WALLET.signMessage(ethers.utils.arrayify(digest));
+
+        const responsePayload: x402Payload = {
+            x402Version: 1,
+            scheme: 'exact',
+            network: destNetworkDetails.name,
+            payload: {
+                signature: signature,
+                authorization: {
+                    from: WALLET.address,
+                    to: endpointReceiver,
+                    value: originalPayload.payload.authorization.value,
+                    validAfter: Math.floor(now.getTime() / 1000).toString(),
+                    validBefore: (Math.floor((now.getTime() / 1000) + 3600)).toString(),
+                    nonce: nonce,
+                },
+            }
+        }
+
+        return responsePayload;
+    }
+
 
     async processPacket(
         networkDetails: networkDetail,
