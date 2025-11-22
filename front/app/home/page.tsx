@@ -49,12 +49,16 @@ export default function Home() {
             Call Cross-Chain Endpoint
           </h2>
 
-          <div className="mb-8">
-            <HowItWorks />
-          </div>
-
-          <div className="mb-8">
-            <CodeExample />
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-8">
+            {/* Left side - Code Example */}
+            <div className="lg:col-span-8">
+              <CodeExample />
+            </div>
+            
+            {/* Right side - How It Works */}
+            <div className="lg:col-span-4">
+              <HowItWorks />
+            </div>
           </div>
 
           <TryItOut />
