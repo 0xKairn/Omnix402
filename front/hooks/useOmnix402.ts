@@ -79,7 +79,7 @@ export function useOmnix402(): UseOmnix402Return {
 
       const domain = {
         name: accept.extra.name,
-        version: accept.extra.version,
+        version: "1",
         chainId: chainId,
         verifyingContract: accept.asset as `0x${string}`,
       };

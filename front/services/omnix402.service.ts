@@ -55,7 +55,8 @@ export class Omnix402Service {
       { method: "GET" }
     );
 
-    if (!response.ok) {
+    // 402 is the expected response for X402 endpoints (Payment Required)
+    if (!response.ok && response.status !== 402) {
       const errorData = await response.json();
       throw new Error(errorData.error || "Failed to get requirements");
     }

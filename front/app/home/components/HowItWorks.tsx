@@ -1,47 +1,76 @@
 export default function HowItWorks() {
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      <div className="bg-white/5 border border-white/10 p-6 hover:bg-white/10 transition-colors">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-8 h-8 bg-white text-black font-bold flex items-center justify-center text-sm">
+    <div className="space-y-4">
+      <h3 className="text-xs font-mono text-white/60 uppercase tracking-wider mb-4">
+        How It Works
+      </h3>
+
+      <div className="bg-white/5 border border-white/10 p-4 hover:bg-white/10 transition-colors">
+        <div className="flex items-start gap-3">
+          <div className="w-6 h-6 bg-white text-black font-bold flex items-center justify-center text-xs flex-shrink-0">
             1
           </div>
-          <h3 className="text-sm font-bold uppercase tracking-wider">
-            Choose Endpoint
-          </h3>
+          <div>
+            <h4 className="text-xs font-bold uppercase tracking-wider mb-1">
+              Choose Your Endpoint
+            </h4>
+            <p className="text-xs text-white/60 leading-relaxed font-mono">
+              Pick any X402 endpoint on Base or Polygon you want to call. Works
+              from code, AI agents, or manual testing.
+            </p>
+          </div>
         </div>
-        <p className="text-xs text-white/60 leading-relaxed font-mono">
-          Enter the destination X402 endpoint URL you want to call (Base and
-          Polygon supported)
-        </p>
       </div>
 
-      <div className="bg-white/5 border border-white/10 p-6 hover:bg-white/10 transition-colors">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-8 h-8 bg-white text-black font-bold flex items-center justify-center text-sm">
+      <div className="bg-white/5 border border-white/10 p-4 hover:bg-white/10 transition-colors">
+        <div className="flex items-start gap-3">
+          <div className="w-6 h-6 bg-white text-black font-bold flex items-center justify-center text-xs flex-shrink-0">
             2
           </div>
-          <h3 className="text-sm font-bold uppercase tracking-wider">
-            Auto Routing
-          </h3>
+          <div>
+            <h4 className="text-xs font-bold uppercase tracking-wider mb-1">
+              Sign the Payment
+            </h4>
+            <p className="text-xs text-white/60 leading-relaxed font-mono">
+              One signature in your wallet using secure EIP-3009 standard. No
+              need to worry about which chain you're on.
+            </p>
+          </div>
         </div>
-        <p className="text-xs text-white/60 leading-relaxed font-mono">
-          Protocol handles cross-chain payment routing via LayerZero OFT
-        </p>
       </div>
 
-      <div className="bg-white/5 border border-white/10 p-6 hover:bg-white/10 transition-colors">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-8 h-8 bg-white text-black font-bold flex items-center justify-center text-sm">
+      <div className="bg-white/5 border border-white/10 p-4 hover:bg-white/10 transition-colors">
+        <div className="flex items-start gap-3">
+          <div className="w-6 h-6 bg-white text-black font-bold flex items-center justify-center text-xs flex-shrink-0">
             3
           </div>
-          <h3 className="text-sm font-bold uppercase tracking-wider">
-            Get Response
-          </h3>
+          <div>
+            <h4 className="text-xs font-bold uppercase tracking-wider mb-1">
+              We Route Cross-Chain
+            </h4>
+            <p className="text-xs text-white/60 leading-relaxed font-mono">
+              Our protocol handles all cross-chain complexity using LayerZero
+              OFT. Your payment reaches the right chain automatically.
+            </p>
+          </div>
         </div>
-        <p className="text-xs text-white/60 leading-relaxed font-mono">
-          Receive the response instantly, payment settled on destination chain
-        </p>
+      </div>
+
+      <div className="bg-white/5 border border-white/10 p-4 hover:bg-white/10 transition-colors">
+        <div className="flex items-start gap-3">
+          <div className="w-6 h-6 bg-white text-black font-bold flex items-center justify-center text-xs flex-shrink-0">
+            4
+          </div>
+          <div>
+            <h4 className="text-xs font-bold uppercase tracking-wider mb-1">
+              Get Your Response
+            </h4>
+            <p className="text-xs text-white/60 leading-relaxed font-mono">
+              Receive the endpoint response instantly. Payment is settled on the
+              destination chain, you get your data.
+            </p>
+          </div>
+        </div>
       </div>
     </div>
   );
