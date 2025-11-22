@@ -25,13 +25,7 @@ contract USDO is OFT, EIP3009Extended {
 
     event Deposit(address indexed account, uint256 amount);
     event Withdraw(address indexed account, uint256 amount);
-    event x402Bridge(
-        address indexed from,
-        address indexed to,
-        address endpointReceiver,
-        bytes32 indexed nonce,
-        uint256 amount
-    );
+    event x402Bridge(address indexed to, address endpointReceiver, bytes32 indexed nonce, uint256 amount);
 
     constructor(
         string memory _name,
@@ -60,15 +54,10 @@ contract USDO is OFT, EIP3009Extended {
         bytes calldata _extraData // @dev unused in the default implementation.
     ) internal virtual override {
         bytes memory composeMsg = OFTMsgCodec.composeMsg(_message);
-        (, bytes32 nonce, address receiver, address endpointReceiver, address sender) = abi.decode(
+        (, bytes32 nonce, address receiver, address endpointReceiver) = abi.decode(
             composeMsg,
-            (address, bytes32, address, address, address)
+            (address, bytes32, address, address)
         );
-
-        require(!_authorizationStates[sender][nonce], _AUTHORIZATION_USED_ERROR);
-
-        _authorizationStates[sender][nonce] = true;
-        emit AuthorizationUsed(sender, nonce);
 
         address toAddress = OFTMsgCodec.sendTo(_message).bytes32ToAddress();
         uint256 amountLD = _toLD(OFTMsgCodec.amountSD(_message));
@@ -83,7 +72,7 @@ contract USDO is OFT, EIP3009Extended {
 
         USDC.safeTransfer(receiver, amountLD);
 
-        emit x402Bridge(sender, receiver, endpointReceiver, nonce, amountLD);
+        emit x402Bridge(receiver, endpointReceiver, nonce, amountLD);
     }
 
     // =====================================================

@@ -64,7 +64,7 @@ contract OmnixRouter is Ownable {
             amountLD: value,
             minAmountLD: value,
             extraOptions: extraOptions,
-            composeMsg: abi.encode(nonce, receiver, endpointReceiver, from),
+            composeMsg: abi.encode(nonce, receiver, endpointReceiver),
             oftCmd: bytes("")
         });
 

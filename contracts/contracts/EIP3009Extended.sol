@@ -59,7 +59,7 @@ abstract contract EIP3009Extended is EIP3009 {
         bytes32 s
     ) external override {
         _transferWithAuthorization(
-            TRANSFER_WITH_AUTHORIZATION_EXTENDED_TYPEHASH,
+            TRANSFER_WITH_AUTHORIZATION_TYPEHASH,
             from,
             to,
             value,
@@ -86,14 +86,14 @@ abstract contract EIP3009Extended is EIP3009 {
      * @param r             r of the signature
      * @param s             s of the signature
      */
-    function transferWithAuthorization(
+    function transferWithAuthorizationData(
         address from,
         address to,
         uint256 value,
         uint256 validAfter,
         uint256 validBefore,
         bytes32 nonce,
-        bytes memory data,
+        bytes32 data,
         uint8 v,
         bytes32 r,
         bytes32 s
@@ -142,7 +142,7 @@ abstract contract EIP3009Extended is EIP3009 {
         require(to == msg.sender, "EIP3009: caller must be the payee");
 
         _transferWithAuthorization(
-            RECEIVE_WITH_AUTHORIZATION_EXTENDED_TYPEHASH,
+            RECEIVE_WITH_AUTHORIZATION_TYPEHASH,
             from,
             to,
             value,
@@ -171,14 +171,14 @@ abstract contract EIP3009Extended is EIP3009 {
      * @param r             r of the signature
      * @param s             s of the signature
      */
-    function receiveWithAuthorization(
+    function receiveWithAuthorizationData(
         address from,
         address to,
         uint256 value,
         uint256 validAfter,
         uint256 validBefore,
         bytes32 nonce,
-        bytes memory data,
+        bytes32 data,
         uint8 v,
         bytes32 r,
         bytes32 s
@@ -208,7 +208,7 @@ abstract contract EIP3009Extended is EIP3009 {
         uint256 validAfter,
         uint256 validBefore,
         bytes32 nonce,
-        bytes memory _data,
+        bytes32 _data,
         uint8 v,
         bytes32 r,
         bytes32 s
@@ -217,48 +217,50 @@ abstract contract EIP3009Extended is EIP3009 {
         require(block.timestamp < validBefore, "EIP3009: authorization is expired");
         require(!_authorizationStates[from][nonce], _AUTHORIZATION_USED_ERROR);
 
-        bytes memory data = abi.encode(typeHash, from, to, value, validAfter, validBefore, nonce, _data);
-        require(EIP712.recover(DOMAIN_SEPARATOR, v, r, s, data) == from, _INVALID_SIGNATURE_ERROR);
-
-        _authorizationStates[from][nonce] = true;
-        emit AuthorizationUsed(from, nonce);
-
-        _update(from, to, value);
-
         if (_data.length > 0) {
+            bytes memory data = abi.encode(typeHash, from, to, value, validAfter, validBefore, nonce, _data);
+            require(EIP712.recover(DOMAIN_SEPARATOR, v, r, s, data) == from, _INVALID_SIGNATURE_ERROR);
+
+            _authorizationStates[from][nonce] = true;
+            emit AuthorizationUsed(from, nonce);
+
+            _update(from, to, value);
+
             _decodePackedData(from, to, value, nonce, _data);
+        } else {
+            bytes memory data = abi.encode(typeHash, from, to, value, validAfter, validBefore, nonce);
+            require(EIP712.recover(DOMAIN_SEPARATOR, v, r, s, data) == from, _INVALID_SIGNATURE_ERROR);
+
+            _authorizationStates[from][nonce] = true;
+            emit AuthorizationUsed(from, nonce);
+
+            _update(from, to, value);
         }
     }
 
-    function _decodePackedData(
-        address from,
-        address to,
-        uint256 value,
-        bytes32 nonce,
-        bytes memory data
-    ) internal virtual {
+    function _decodePackedData(address from, address to, uint256 value, bytes32 nonce, bytes32 data) internal virtual {
         // Decode the data and call an authorized router
-        (address routerAddress, bytes memory routerPayload) = abi.decode(data, (address, bytes));
+        // (address routerAddress, bytes memory routerPayload) = abi.decode(data, (address, bytes));
 
-        if (!authorizedRouters[routerAddress]) {
-            revert UnauthorizedRouter(routerAddress);
-        }
+        // if (!authorizedRouters[routerAddress]) {
+        //     revert UnauthorizedRouter(routerAddress);
+        // }
 
-        // Call router with clean input
-        (bool success, bytes memory ret) = routerAddress.call(
-            abi.encodeWithSignature(
-                "execute(address,address,uint256,bytes32,bytes)",
-                from,
-                to,
-                value,
-                nonce,
-                routerPayload
-            )
-        );
+        // // Call router with clean input
+        // (bool success, bytes memory ret) = routerAddress.call(
+        //     abi.encodeWithSignature(
+        //         "execute(address,address,uint256,bytes32,bytes)",
+        //         from,
+        //         to,
+        //         value,
+        //         nonce,
+        //         routerPayload
+        //     )
+        // );
 
-        if (!success) {
-            revert ExecutionFailed(routerAddress, ret);
-        }
+        // if (!success) {
+        //     revert ExecutionFailed(routerAddress, ret);
+        // }
     }
 
     function setAuthorizedRouter(address router, bool authorized) external virtual;

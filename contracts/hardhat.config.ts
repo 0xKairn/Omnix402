@@ -27,8 +27,8 @@ const PRIVATE_KEY = process.env.PRIVATE_KEY
 const accounts: HttpNetworkAccountsUserConfig | undefined = MNEMONIC
     ? { mnemonic: MNEMONIC }
     : PRIVATE_KEY
-      ? [PRIVATE_KEY]
-      : undefined
+        ? [PRIVATE_KEY]
+        : undefined
 
 if (accounts == null) {
     console.warn(

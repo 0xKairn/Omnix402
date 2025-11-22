@@ -15,24 +15,24 @@ export type networkDetail = {
 export const NETWORKS_DETAILS: { [key: string]: networkDetail } = {
     base: {
         name: 'base',
-        rpcUrl: 'https://base-mainnet.public.blastapi.io',
+        rpcUrl: 'https://base-mainnet.core.chainstack.com/88d169a026ebe2b2a5462a7e956435c1',
         chainId: 8453,
         payementReceiver: '0x0187523c9b2583B52c5Ca407b68A369F1a560F1B', // Replace with actual address
-        USDOAddress: '0x5FAC7F2c99d9e06deff2f579FDE67a2eCDf0E0aC', // Replace with actual USDO contract address
-        OmnixRouterAddress: '0xC1333a31EE5f3F302CB0428921f2908e6CAddEb1', // Replace with actual Omnix Router contract address
-        OmnixDVNAddress: '0x5b0399fc7ee8d6f2DC21e57EFa54D9D3703702f2', // Replace with actual Omnix DVN contract address
-        OmnixExecutorAddress: '0x4894cFD59ac3757e7de5FD302Ea8032F8aB71f65', // Replace with actual Omnix Executor contract address
+        USDOAddress: '0xF92EdE8380F8f2479998848E07c4d9EC28Dc90ed', // Replace with actual USDO contract address
+        OmnixRouterAddress: '0xc8C5F4e85024ee85DDc9EaC733056002e405Ed83', // Replace with actual Omnix Router contract address
+        OmnixDVNAddress: '0x619EdDc3Aa98Ab645954fe8e448b02Cd6Dc06E7c', // Replace with actual Omnix DVN contract address
+        OmnixExecutorAddress: '0x4704C5B58FB25C269Ba5EB964ea52f8314415b88', // Replace with actual Omnix Executor contract address
         ReceiveULN302Address: '0xc70AB6f32772f59fBfc23889Caf4Ba3376C84bAf' // Replace with actual Receive ULN302 contract address
     },
     polygon: {
         name: 'polygon',
-        rpcUrl: 'https://polygon-rpc.com',
+        rpcUrl: 'https://polygon-mainnet.core.chainstack.com/4e65e6f7f6e02d6a645648cd6114c43e',
         chainId: 137,
         payementReceiver: '0x0187523c9b2583B52c5Ca407b68A369F1a560F1B', // Replace with actual address
-        USDOAddress: '0x5FAC7F2c99d9e06deff2f579FDE67a2eCDf0E0aC', // Replace with actual USDO contract address
-        OmnixRouterAddress: '0xC1333a31EE5f3F302CB0428921f2908e6CAddEb1', // Replace with actual Omnix Router contract address
-        OmnixDVNAddress: '0x5b0399fc7ee8d6f2DC21e57EFa54D9D3703702f2', // Replace with actual Omnix DVN contract address
-        OmnixExecutorAddress: '0x4894cFD59ac3757e7de5FD302Ea8032F8aB71f65', // Replace with actual Omnix Executor contract address
+        USDOAddress: '0x56cD9DD31485112e269C7b4EF26cD17DF3411173', // Replace with actual USDO contract address
+        OmnixRouterAddress: '0xb258063A7b6e31A582B8fbef9415FaA6459C8FDF', // Replace with actual Omnix Router contract address
+        OmnixDVNAddress: '0xfdaB8E1B364e6De90400fF168ee9E5ecaa084e4C', // Replace with actual Omnix DVN contract address
+        OmnixExecutorAddress: '0xA57CF7EB42672f8116a26e0b3e623256a16aC3da', // Replace with actual Omnix Executor contract address
         ReceiveULN302Address: '0x1322871e4ab09Bc7f5717189434f97bBD9546e95' // Replace with actual Receive ULN302 contract address
     }
 };
