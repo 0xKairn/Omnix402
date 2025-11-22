@@ -8,6 +8,7 @@ import { EIP712 } from "./lib/EIP712.sol";
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { IERC20Internal } from "./lib/IERC20Internal.sol";
 
 contract USDO is OFT, EIP3009Extended {
     using SafeERC20 for ERC20;
@@ -20,6 +21,8 @@ contract USDO is OFT, EIP3009Extended {
 
     // To know what is the oft token USDO of any supported chains
     mapping(uint256 => address) public chainIdToOFT;
+
+    error InsufficientAllowance();
 
     event Deposit(address indexed account, uint256 amount);
     event Withdraw(address indexed account, uint256 amount);
