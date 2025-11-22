@@ -6,7 +6,6 @@ import { OFT } from "@layerzerolabs/oft-evm/contracts/OFT.sol";
 import { EIP3009Extended } from "./EIP3009Extended.sol";
 import { EIP712 } from "./lib/EIP712.sol";
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { IERC20Internal } from "./lib/IERC20Internal.sol";
 
@@ -15,12 +14,6 @@ contract USDO is OFT, EIP3009Extended {
 
     ERC20 public USDC;
     uint256 public _decimals = 6;
-
-    // To know what is the endpointId of any supported chains
-    mapping(uint256 => uint32) public chainIdToEid;
-
-    // To know what is the oft token USDO of any supported chains
-    mapping(uint256 => address) public chainIdToOFT;
 
     error InsufficientAllowance();
 
@@ -48,15 +41,6 @@ contract USDO is OFT, EIP3009Extended {
 
     function setAuthorizedRouter(address router, bool authorized) external override onlyOwner {
         authorizedRouters[router] = authorized;
-    }
-
-    // =====================================================
-    // -------------- OFTCore Implementations --------------
-    // =====================================================
-
-    function setChainIdEidOFT(uint256 chainId, uint32 eid, address oftAddress) external onlyOwner {
-        chainIdToEid[chainId] = eid;
-        chainIdToOFT[chainId] = oftAddress;
     }
 
     // =====================================================

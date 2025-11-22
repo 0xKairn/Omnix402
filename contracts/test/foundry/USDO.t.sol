@@ -29,24 +29,26 @@ contract USDOTest is Test {
         owner = vm.addr(privateKey);
         vm.startPrank(owner);
 
-        omniRouter = new OmniRouter();
+        omniRouter = new OmniRouter(owner);
+        omniRouter.setChainIdEidOFT(arbitrumChainId, eidArbitrum, address(omniRouter));
         usdo = new USDO("USDO", "USDO", lzEndpointBase, owner, USDC);
 
         usdo.setAuthorizedRouter(address(omniRouter), true);
+        usdo.setPeer(eidArbitrum, 0x0000000000000000000000002936944c6ab1f6f9dafdbd8ab050b4b3cd6eb223);
     }
 
     function test_transferWithAuthorization() public {
         uint256 privateKey = vm.envUint("PRIVATE_KEY");
         bytes32 nonce = keccak256(abi.encodePacked(block.timestamp));
 
-        bytes memory routerData = abi.encode(eidArbitrum, owner);
+        bytes memory routerData = abi.encode(arbitrumChainId, owner);
         bytes memory data = abi.encode(address(omniRouter), routerData);
 
         (uint8 v, bytes32 r, bytes32 s) = _buildTransferWithAuthorization(
             usdo,
             owner,
             privateKey,
-            address(usdo),
+            address(omniRouter),
             tokensToSend,
             nonce,
             data
@@ -54,7 +56,7 @@ contract USDOTest is Test {
 
         usdo.transferWithAuthorization(
             owner,
-            address(usdo),
+            address(omniRouter),
             tokensToSend,
             block.timestamp - 100,
             block.timestamp + 1000,
