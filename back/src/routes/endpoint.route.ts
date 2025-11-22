@@ -5,11 +5,14 @@ import { AUTHORIZED_NETWORKS, EXTRA_USDO, networkDetail, NETWORKS_DETAILS, Packe
 import usdoABI from "../abis/usdo.abi.json";
 import omnixExecutorABI from "../abis/omnixExecutor.abi.json";
 import omnixDVNABI from "../abis/omnixDVN.abi.json";
+import { CallRepository } from "../repositories/call.repository";
 
 export class EndpointRoute {
     public router: Router = Router();
 
-    constructor() {
+    constructor(
+        private callRepository: CallRepository
+    ) {
         this.initializeRoutes();
     }
 
@@ -78,7 +81,7 @@ export class EndpointRoute {
             newAccept.data = ethers.utils.defaultAbiCoder.encode(
                 ['address', 'bytes'],
                 [
-                    destNetworkDetails.OmnixRouterAddress,
+                    sourceNetworkDetails.OmnixRouterAddress,
                     ethers.utils.defaultAbiCoder.encode(
                         ['uint256', 'address', 'address'],
                         [
@@ -115,19 +118,16 @@ export class EndpointRoute {
                 return res.status(400).json({ error: 'Invalid payload: missing authorization data' });
             }
 
-            // const [omnixRouterAddress, innerBytes] =
-            //     ethers.utils.defaultAbiCoder.decode(
-            //         ['address', 'bytes'],
-            //         payloadJson.payload.authorization.data
-            //     );
-            // const [destChainId, paymentReceiver, endpointReceiver] =
-            //     ethers.utils.defaultAbiCoder.decode(
-            //         ['uint256', 'address', 'address'],
-            //         innerBytes
-            //     );
-
-            const destChainId = NETWORKS_DETAILS['base'].chainId;
-            const endpointReceiver = NETWORKS_DETAILS['base'].payementReceiver;
+            const [omnixRouterAddress, innerBytes] =
+                ethers.utils.defaultAbiCoder.decode(
+                    ['address', 'bytes'],
+                    payloadJson.payload.authorization.data
+                );
+            const [destChainId, paymentReceiver, endpointReceiver] =
+                ethers.utils.defaultAbiCoder.decode(
+                    ['uint256', 'address', 'address'],
+                    innerBytes
+                );
 
             const destNetworkDetails = NETWORKS_DETAILS[getChainNameById(destChainId)];
             const sourceNetworkDetails = NETWORKS_DETAILS[payloadJson.network];
@@ -143,7 +143,7 @@ export class EndpointRoute {
 
             const { v, r, s } = ethers.utils.splitSignature(payloadJson.payload.signature);
 
-            const data = await sourceUSDOContract.populateTransaction['transferWithAuthorizationData(address,address,uint256,uint256,uint256,bytes32,bytes32,uint8,bytes32,bytes32)'](
+            const data = await sourceUSDOContract.populateTransaction['transferWithAuthorization(address,address,uint256,uint256,uint256,bytes32,bytes,uint8,bytes32,bytes32)'](
                 payloadJson.payload.authorization.from,
                 payloadJson.payload.authorization.to,
                 payloadJson.payload.authorization.value,

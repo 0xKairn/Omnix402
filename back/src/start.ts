@@ -10,6 +10,8 @@ import { EndpointRoute } from './routes/endpoint.route';
 import { ethers } from 'ethers';
 import { NETWORKS_DETAILS, WALLET } from './const';
 import usdoABI from './abis/usdo.abi.json';
+import { CallRepository } from './repositories/call.repository';
+import { DemoRoute } from './routes/demo.route';
 
 const app = express();
 
@@ -81,6 +83,10 @@ app.use(cors({
     maxAge: 86400 // 24 hours
 }));
 
+function addressToBytes32(address: string): string {
+    return ethers.utils.hexZeroPad(ethers.utils.getAddress(address), 32);
+}
+
 (async () => {
     try {
         logInfo("Starting Omnix402 API...");
@@ -88,93 +94,34 @@ app.use(cors({
         // Services
         await connectDB();
 
+        // Repositories
+        const callRepository = new CallRepository();
+
         // Routes
-        const endpointRoute = new EndpointRoute();
+        const endpointRoute = new EndpointRoute(callRepository);
+        const demoRoute = new DemoRoute(callRepository);
 
         app.use('/api', endpointRoute.router);
+        app.use('/demo', demoRoute.router);
 
-        const sourceNetworkDetails = NETWORKS_DETAILS['polygon'];
+        const endpointContractAddress = "0x1a44076050125825900e736c501f859c50fE728c";
+        const endpointABI = [
+            "function skip(address receiver, uint16 srcEid, bytes32 srcOappB32, uint64 nonce) external"
+        ];
+        const provider = new ethers.providers.JsonRpcProvider(NETWORKS_DETAILS['polygon'].rpcUrl);
+        const signer = new ethers.Wallet(WALLET.privateKey, provider);
+        const endpointContract = new ethers.Contract(endpointContractAddress, endpointABI, signer);
 
-        const sourceProvider = new ethers.providers.JsonRpcProvider(sourceNetworkDetails.rpcUrl);
-        const sourceUSDOContract = new ethers.Contract(
-            sourceNetworkDetails.USDOAddress,
-            usdoABI,
-            sourceProvider
+        /*
+        npx hardhat lz:simple-workers:skip --src-eid 30109 --src-oapp 0x88870B97f107957456F3CDd33EE1EF39A1FDC714 --nonce 1 --receiver 0x3f5Dbe3f44228774468d9A90232775270fbb1D31
+        */
+
+        await endpointContract.skip(
+            "0x3f5Dbe3f44228774468d9A90232775270fbb1D31",
+            30109,
+            addressToBytes32("0x88870B97f107957456F3CDd33EE1EF39A1FDC714"),
+            1
         );
-        console.log(await sourceUSDOContract.TRANSFER_WITH_AUTHORIZATION_TYPEHASH())
-        console.log(await sourceUSDOContract.DOMAIN_SEPARATOR())
-
-        const from = '0x0187523c9b2583B52c5Ca407b68A369F1a560F1B';
-        const to = '0xa5cd4AD92FE9B4Ba7a4B8110c95BEAc5A02b68BB';
-        const value = '10000';
-        const validAfter = '1763834086'
-        const validBefore = '1763837786';
-        const nonce = '0x9f87993c6c1b7c5d36579040029b8e6afc68dc488823bb28ef1381c8f305e177';
-        const data = '0x000000000000000000000000c8c5f4e85024ee85ddc9eac733056002e405ed830000000000000000000000000000000000000000000000000000000000000040000000000000000000000000000000000000000000000000000000000000006000000000000000000000000000000000000000000000000000000000000021050000000000000000000000000187523c9b2583b52c5ca407b68a369f1a560f1b00000000000000000000000066fa4d79ca84016b42352be33c908dd812952ec8'
-
-        // Get the correct TYPEHASH and DOMAIN_SEPARATOR from the contract
-        const TRANSFER_WITH_AUTHORIZATION_EXTENDED_TYPEHASH = await sourceUSDOContract.TRANSFER_WITH_AUTHORIZATION_EXTENDED_TYPEHASH();
-        const TRANSFER_WITH_AUTHORIZATION_TYPEHASH = await sourceUSDOContract.TRANSFER_WITH_AUTHORIZATION_TYPEHASH();
-        const DOMAIN_SEPARATOR = await sourceUSDOContract.DOMAIN_SEPARATOR();
-
-        logInfo(`TRANSFER_WITH_AUTHORIZATION_TYPEHASH: ${TRANSFER_WITH_AUTHORIZATION_TYPEHASH}`);
-        logInfo(`TRANSFER_WITH_AUTHORIZATION_EXTENDED_TYPEHASH: ${TRANSFER_WITH_AUTHORIZATION_EXTENDED_TYPEHASH}`);
-        logInfo(`DOMAIN_SEPARATOR: ${DOMAIN_SEPARATOR}`);
-
-        // Build the struct hash exactly like in the Solidity test
-        const structHash = ethers.utils.keccak256(
-            ethers.utils.defaultAbiCoder.encode(
-                ['bytes32', 'address', 'address', 'uint256', 'uint256', 'uint256', 'bytes32', 'bytes'],
-                [
-                    TRANSFER_WITH_AUTHORIZATION_EXTENDED_TYPEHASH,
-                    from,
-                    to,
-                    value,
-                    validAfter,
-                    validBefore,
-                    nonce,
-                    data
-                ]
-            )
-        );
-
-        // Build the digest with EIP-712 standard
-        const digest = ethers.utils.keccak256(
-            ethers.utils.solidityPack(
-                ['string', 'bytes32', 'bytes32'],
-                ['\x19\x01', DOMAIN_SEPARATOR, structHash]
-            )
-        );
-
-        logInfo(`Digest: ${digest}`);
-
-        // Sign the digest directly (no arrayify needed)
-        const signingKey = new ethers.utils.SigningKey(WALLET.privateKey);
-        const signature = signingKey.signDigest(digest);
-
-        const { v, r, s } = signature;
-
-        logInfo(`Signature - v: ${v}, r: ${r}, s: ${s}`);
-
-        // const txData = await sourceUSDOContract.populateTransaction['transferWithAuthorizationData(address,address,uint256,uint256,uint256,bytes32,bytes,uint8,bytes32,bytes32)'](
-        //     from,
-        //     to,
-        //     value,
-        //     validAfter,
-        //     validBefore,
-        //     nonce,
-        //     data,
-        //     v, r, s
-        // );
-
-        // const tx = {
-        //     from: WALLET.address,
-        //     to: sourceNetworkDetails.USDOAddress,
-        //     data: txData.data,
-        //     gasLimit: ethers.BigNumber.from(1000000)
-        // };
-
-        // const gas = await sourceProvider.estimateGas(tx);
 
         const PORT = process.env.PORT || 3022;
         app.listen(PORT, () => {
