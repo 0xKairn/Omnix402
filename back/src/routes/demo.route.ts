@@ -146,103 +146,103 @@ export class DemoRoute {
             const txResponse = await sourceProvider.sendTransaction(signedTx);
 
             // send response to the client
-            res.status(200).json({
+            return res.status(200).json({
                 callId: call._id
             });
 
-            await this.callRepository.updateCall(call._id, {
-                sourcePaymentTxHash: txResponse.hash
-            });
+            // await this.callRepository.updateCall(call._id, {
+            //     sourcePaymentTxHash: txResponse.hash
+            // });
 
-            try {
-                const receipt = await txResponse.wait();
+            // try {
+            //     const receipt = await txResponse.wait();
 
-                await this.callRepository.updateCall(call._id, {
-                    sourcePaymentStatus: 'CONFIRMED'
-                });
+            //     await this.callRepository.updateCall(call._id, {
+            //         sourcePaymentStatus: 'CONFIRMED'
+            //     });
 
-                // Extract PacketSent event
-                const ENDPOINT_ABI = ['event PacketSent(bytes encodedPayload, bytes options, address sendLibrary)']
-                const ISourceEndpoint = new ethers.utils.Interface(ENDPOINT_ABI);
+            //     // Extract PacketSent event
+            //     const ENDPOINT_ABI = ['event PacketSent(bytes encodedPayload, bytes options, address sendLibrary)']
+            //     const ISourceEndpoint = new ethers.utils.Interface(ENDPOINT_ABI);
 
-                let packetSentEventData: PacketData | null = null;
+            //     let packetSentEventData: PacketData | null = null;
 
-                for (const log of receipt.logs) {
-                    try {
-                        const parsedLog = ISourceEndpoint.parseLog(log);
-                        if (parsedLog.name === 'PacketSent') {
-                            packetSentEventData = decodePacket(parsedLog.args.encodedPayload);
-                            break;
-                        }
-                    } catch (e) {
-                        continue;
-                    }
-                }
+            //     for (const log of receipt.logs) {
+            //         try {
+            //             const parsedLog = ISourceEndpoint.parseLog(log);
+            //             if (parsedLog.name === 'PacketSent') {
+            //                 packetSentEventData = decodePacket(parsedLog.args.encodedPayload);
+            //                 break;
+            //             }
+            //         } catch (e) {
+            //             continue;
+            //         }
+            //     }
 
-                if (!packetSentEventData) {
-                    logError(`PacketSent event not found in transaction logs.`);
-                    await this.callRepository.updateCall(call._id, {
-                        sourcePaymentStatus: 'FAILED'
-                    });
-                    return;
-                }
+            //     if (!packetSentEventData) {
+            //         logError(`PacketSent event not found in transaction logs.`);
+            //         await this.callRepository.updateCall(call._id, {
+            //             sourcePaymentStatus: 'FAILED'
+            //         });
+            //         return;
+            //     }
 
-                // Process packet on destination chain
-                try {
-                    const txHashes = await this.processPacket(destNetworkDetails, packetSentEventData, receipt.transactionHash);
+            //     // Process packet on destination chain
+            //     try {
+            //         const txHashes = await this.processPacket(destNetworkDetails, packetSentEventData, receipt.transactionHash);
 
-                    await this.callRepository.updateCall(call._id, {
-                        verifyStatus: 'CONFIRMED',
-                        verifyHash: txHashes.verifyTxHash,
-                        relayStatus: 'CONFIRMED',
-                        relayHash: txHashes.commitTxHash,
-                        executionStatus: 'CONFIRMED',
-                        executionHash: txHashes.executeTxHash
-                    });
+            //         await this.callRepository.updateCall(call._id, {
+            //             verifyStatus: 'CONFIRMED',
+            //             verifyHash: txHashes.verifyTxHash,
+            //             relayStatus: 'CONFIRMED',
+            //             relayHash: txHashes.commitTxHash,
+            //             executionStatus: 'CONFIRMED',
+            //             executionHash: txHashes.executeTxHash
+            //         });
 
-                    // Build response payload and call the API
-                    try {
-                        const responsePayload = await this.buildResponsePayload(
-                            body.accepts[0].maxAmountRequired,
-                            destNetworkDetails,
-                            body.accepts[0].payTo
-                        );
+            //         // Build response payload and call the API
+            //         try {
+            //             const responsePayload = await this.buildResponsePayload(
+            //                 body.accepts[0].maxAmountRequired,
+            //                 destNetworkDetails,
+            //                 body.accepts[0].payTo
+            //             );
 
-                        const base64Payload = Buffer.from(JSON.stringify(responsePayload)).toString('base64');
+            //             const base64Payload = Buffer.from(JSON.stringify(responsePayload)).toString('base64');
 
-                        const apiResponse = await fetch(demoURL, {
-                            method: 'GET',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'X-Payment': base64Payload
-                            },
-                        });
+            //             const apiResponse = await fetch(demoURL, {
+            //                 method: 'GET',
+            //                 headers: {
+            //                     'Content-Type': 'application/json',
+            //                     'X-Payment': base64Payload
+            //                 },
+            //             });
 
-                        const responseBody = await apiResponse.json();
-                        const xPaymentResponse = apiResponse.headers.get('X-Payment-Response');
+            //             const responseBody = await apiResponse.json();
+            //             const xPaymentResponse = apiResponse.headers.get('X-Payment-Response');
 
-                        await this.callRepository.updateCall(call._id, {
-                            xPaymentResponse: xPaymentResponse
-                        });
+            //             await this.callRepository.updateCall(call._id, {
+            //                 xPaymentResponse: xPaymentResponse
+            //             });
 
-                        logInfo(`Demo call ${call._id} completed successfully with X-Payment-Response`);
-                    } catch (error) {
-                        logError(`Error calling API for call ${call._id}: ${error}`);
-                    }
-                } catch (error) {
-                    logError(`Error processing packet for call ${call._id}: ${error}`);
-                    await this.callRepository.updateCall(call._id, {
-                        verifyStatus: 'FAILED',
-                        relayStatus: 'FAILED',
-                        executionStatus: 'FAILED'
-                    });
-                }
+            //             logInfo(`Demo call ${call._id} completed successfully with X-Payment-Response`);
+            //         } catch (error) {
+            //             logError(`Error calling API for call ${call._id}: ${error}`);
+            //         }
+            //     } catch (error) {
+            //         logError(`Error processing packet for call ${call._id}: ${error}`);
+            //         await this.callRepository.updateCall(call._id, {
+            //             verifyStatus: 'FAILED',
+            //             relayStatus: 'FAILED',
+            //             executionStatus: 'FAILED'
+            //         });
+            //     }
 
-            } catch (error) {
-                await this.callRepository.updateCall(call._id, {
-                    sourcePaymentStatus: 'FAILED'
-                });
-            }
+            // } catch (error) {
+            //     await this.callRepository.updateCall(call._id, {
+            //         sourcePaymentStatus: 'FAILED'
+            //     });
+            // }
         } catch (error) {
             logError(`Error in demo endpoint: ${error}`);
             res.status(500).json({ error: 'Internal Server Error' });
@@ -329,9 +329,7 @@ export class DemoRoute {
             gas: 200000,
             value: 0,
         }
-        const executeData = await destExecutor.populateTransaction.commitAndExecute(
-            networkDetails.ReceiveULN302Address,
-            lzReceiveParam, []);
+        const executeData = await destExecutor.populateTransaction.commitAndExecute(networkDetails.ReceiveULN302Address, lzReceiveParam, []);
 
         const executeTx = {
             from: signer.address,

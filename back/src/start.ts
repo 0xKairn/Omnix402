@@ -104,25 +104,6 @@ function addressToBytes32(address: string): string {
         app.use('/api', endpointRoute.router);
         app.use('/demo', demoRoute.router);
 
-        const endpointContractAddress = "0x1a44076050125825900e736c501f859c50fE728c";
-        const endpointABI = [
-            "function skip(address receiver, uint16 srcEid, bytes32 srcOappB32, uint64 nonce) external"
-        ];
-        const provider = new ethers.providers.JsonRpcProvider(NETWORKS_DETAILS['polygon'].rpcUrl);
-        const signer = new ethers.Wallet(WALLET.privateKey, provider);
-        const endpointContract = new ethers.Contract(endpointContractAddress, endpointABI, signer);
-
-        /*
-        npx hardhat lz:simple-workers:skip --src-eid 30109 --src-oapp 0x88870B97f107957456F3CDd33EE1EF39A1FDC714 --nonce 1 --receiver 0x3f5Dbe3f44228774468d9A90232775270fbb1D31
-        */
-
-        await endpointContract.skip(
-            "0x3f5Dbe3f44228774468d9A90232775270fbb1D31",
-            30109,
-            addressToBytes32("0x88870B97f107957456F3CDd33EE1EF39A1FDC714"),
-            1
-        );
-
         const PORT = process.env.PORT || 3022;
         app.listen(PORT, () => {
             logInfo(`HTTP Server running on port ${PORT}`);
