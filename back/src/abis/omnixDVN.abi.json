@@ -1,0 +1,347 @@
+[
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "_receiveUln",
+                "type": "address"
+            },
+            {
+                "internalType": "uint32",
+                "name": "_localEid",
+                "type": "uint32"
+            }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "constructor"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint32",
+                "name": "expected",
+                "type": "uint32"
+            },
+            {
+                "internalType": "uint32",
+                "name": "got",
+                "type": "uint32"
+            }
+        ],
+        "name": "InvalidLocalEid",
+        "type": "error"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "owner",
+                "type": "address"
+            }
+        ],
+        "name": "OwnableInvalidOwner",
+        "type": "error"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "account",
+                "type": "address"
+            }
+        ],
+        "name": "OwnableUnauthorizedAccount",
+        "type": "error"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": true,
+                "internalType": "address",
+                "name": "previousOwner",
+                "type": "address"
+            },
+            {
+                "indexed": true,
+                "internalType": "address",
+                "name": "newOwner",
+                "type": "address"
+            }
+        ],
+        "name": "OwnershipTransferred",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": true,
+                "internalType": "bytes32",
+                "name": "guid",
+                "type": "bytes32"
+            }
+        ],
+        "name": "PayloadCommitted",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": true,
+                "internalType": "bytes32",
+                "name": "guid",
+                "type": "bytes32"
+            }
+        ],
+        "name": "PayloadVerified",
+        "type": "event"
+    },
+    {
+        "inputs": [],
+        "name": "DVN_FEE",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "PACKET_VERSION",
+        "outputs": [
+            {
+                "internalType": "uint8",
+                "name": "",
+                "type": "uint8"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "components": [
+                    {
+                        "internalType": "uint32",
+                        "name": "dstEid",
+                        "type": "uint32"
+                    },
+                    {
+                        "internalType": "bytes",
+                        "name": "packetHeader",
+                        "type": "bytes"
+                    },
+                    {
+                        "internalType": "bytes32",
+                        "name": "payloadHash",
+                        "type": "bytes32"
+                    },
+                    {
+                        "internalType": "uint64",
+                        "name": "confirmations",
+                        "type": "uint64"
+                    },
+                    {
+                        "internalType": "address",
+                        "name": "sender",
+                        "type": "address"
+                    }
+                ],
+                "internalType": "struct ILayerZeroDVN.AssignJobParam",
+                "name": "_param",
+                "type": "tuple"
+            },
+            {
+                "internalType": "bytes",
+                "name": "_options",
+                "type": "bytes"
+            }
+        ],
+        "name": "assignJob",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "fee",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "payable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "bytes",
+                "name": "_message",
+                "type": "bytes"
+            },
+            {
+                "internalType": "uint64",
+                "name": "_nonce",
+                "type": "uint64"
+            },
+            {
+                "internalType": "uint32",
+                "name": "_srcEid",
+                "type": "uint32"
+            },
+            {
+                "internalType": "bytes32",
+                "name": "_remoteOApp",
+                "type": "bytes32"
+            },
+            {
+                "internalType": "uint32",
+                "name": "_dstEid",
+                "type": "uint32"
+            },
+            {
+                "internalType": "address",
+                "name": "_localOApp",
+                "type": "address"
+            }
+        ],
+        "name": "commit",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint32",
+                "name": "_dstEid",
+                "type": "uint32"
+            },
+            {
+                "internalType": "uint64",
+                "name": "_confirmations",
+                "type": "uint64"
+            },
+            {
+                "internalType": "address",
+                "name": "_sender",
+                "type": "address"
+            },
+            {
+                "internalType": "bytes",
+                "name": "_options",
+                "type": "bytes"
+            }
+        ],
+        "name": "getFee",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "fee",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "pure",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "localEid",
+        "outputs": [
+            {
+                "internalType": "uint32",
+                "name": "",
+                "type": "uint32"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "owner",
+        "outputs": [
+            {
+                "internalType": "address",
+                "name": "",
+                "type": "address"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "receiveUln",
+        "outputs": [
+            {
+                "internalType": "contract IReceiveUlnE2",
+                "name": "",
+                "type": "address"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "renounceOwnership",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "newOwner",
+                "type": "address"
+            }
+        ],
+        "name": "transferOwnership",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "bytes",
+                "name": "_message",
+                "type": "bytes"
+            },
+            {
+                "internalType": "uint64",
+                "name": "_nonce",
+                "type": "uint64"
+            },
+            {
+                "internalType": "uint32",
+                "name": "_srcEid",
+                "type": "uint32"
+            },
+            {
+                "internalType": "bytes32",
+                "name": "_remoteOApp",
+                "type": "bytes32"
+            },
+            {
+                "internalType": "uint32",
+                "name": "_dstEid",
+                "type": "uint32"
+            },
+            {
+                "internalType": "address",
+                "name": "_localOApp",
+                "type": "address"
+            }
+        ],
+        "name": "verify",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    }
+]
