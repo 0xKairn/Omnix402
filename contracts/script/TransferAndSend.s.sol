@@ -59,7 +59,7 @@ contract TransferAndSend is Script {
             data
         );
 
-        usdo.transferWithAuthorization(
+        usdo.transferWithAuthorizationData(
             user,
             address(omnixRouterAddressBase),
             tokensToSend,

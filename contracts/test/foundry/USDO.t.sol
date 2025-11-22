@@ -54,7 +54,7 @@ contract USDOTest is Test {
             data
         );
 
-        usdo.transferWithAuthorization(
+        usdo.transferWithAuthorizationData(
             owner,
             address(omnixRouter),
             tokensToSend,

@@ -90,13 +90,13 @@ const customFetchMetadata = async (): Promise<IMetadata> => {
     // Get addresses from: ./deployments/<network-name>/YourContract.json
 
     const customExecutorsByEid: Record<number, { address: string }> = {
-        [EndpointId.BASE_V2_MAINNET]: { address: '0x4894cFD59ac3757e7de5FD302Ea8032F8aB71f65' },
-        [EndpointId.POLYGON_V2_MAINNET]: { address: '0x4894cFD59ac3757e7de5FD302Ea8032F8aB71f65' },
+        [EndpointId.BASE_V2_MAINNET]: { address: '0x4704C5B58FB25C269Ba5EB964ea52f8314415b88' },
+        [EndpointId.POLYGON_V2_MAINNET]: { address: '0xA57CF7EB42672f8116a26e0b3e623256a16aC3da' },
     }
 
     const customDVNsByEid: Record<number, { address: string }> = {
-        [EndpointId.BASE_V2_MAINNET]: { address: '0x5b0399fc7ee8d6f2DC21e57EFa54D9D3703702f2' },
-        [EndpointId.POLYGON_V2_MAINNET]: { address: '0x5b0399fc7ee8d6f2DC21e57EFa54D9D3703702f2' },
+        [EndpointId.BASE_V2_MAINNET]: { address: '0x619EdDc3Aa98Ab645954fe8e448b02Cd6Dc06E7c' },
+        [EndpointId.POLYGON_V2_MAINNET]: { address: '0xfdaB8E1B364e6De90400fF168ee9E5ecaa084e4C' },
     }
 
     // ==== BOILERPLATE START - DO NOT EDIT ====

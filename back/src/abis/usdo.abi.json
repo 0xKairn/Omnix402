@@ -1503,7 +1503,7 @@
     },
     {
         "type": "function",
-        "name": "transferWithAuthorization",
+        "name": "transferWithAuthorizationData",
         "inputs": [
             {
                 "name": "from",
@@ -1537,8 +1537,8 @@
             },
             {
                 "name": "data",
-                "type": "bytes",
-                "internalType": "bytes"
+                "type": "bytes32",
+                "internalType": "bytes32"
             },
             {
                 "name": "v",

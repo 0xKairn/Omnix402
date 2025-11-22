@@ -42,18 +42,23 @@ export class EndpointRoute {
         try {
             // Fetch endpoint by calling it
             const response = await fetch(endpoint, {
-                method: 'POST'
+                method: 'GET'
             });
+
+            console.log(response)
 
             const body = await response.json();
 
+            console.log(body)
+
             const sourceAccept = body.accepts[0];
 
+            const sourceNetworkDetails = NETWORKS_DETAILS[network];
             const destNetworkDetails = NETWORKS_DETAILS[sourceAccept.network];
 
             const hasEnoughUSDC = await checkIfDestHasEnoughUSDC(
                 destNetworkDetails,
-                sourceAccept.amount
+                sourceAccept.maxAmountRequired
             );
 
             if (!hasEnoughUSDC) {
@@ -63,13 +68,12 @@ export class EndpointRoute {
             const newAccept = {
                 ...sourceAccept,
                 network,                                     // override
-                payTo: destNetworkDetails.USDOAddress,        // override
-                asset: destNetworkDetails.USDOAddress,        // override
-                extra: EXTRA_USDO,                             // override
-                destNetwork: sourceAccept.network
+                payTo: sourceNetworkDetails.USDOAddress,        // override
+                asset: sourceNetworkDetails.USDOAddress,        // override
+                extra: EXTRA_USDO                             // override
             };
 
-            body.accepts.push(newAccept);
+            body.accepts[0] = newAccept;
 
             newAccept.data = ethers.utils.defaultAbiCoder.encode(
                 ['address', 'bytes'],
@@ -111,16 +115,19 @@ export class EndpointRoute {
                 return res.status(400).json({ error: 'Invalid payload: missing authorization data' });
             }
 
-            const [omnixRouterAddress, innerBytes] =
-                ethers.utils.defaultAbiCoder.decode(
-                    ['address', 'bytes'],
-                    payloadJson.payload.authorization.data
-                );
-            const [destChainId, paymentReceiver, endpointReceiver] =
-                ethers.utils.defaultAbiCoder.decode(
-                    ['uint256', 'address', 'address'],
-                    innerBytes
-                );
+            // const [omnixRouterAddress, innerBytes] =
+            //     ethers.utils.defaultAbiCoder.decode(
+            //         ['address', 'bytes'],
+            //         payloadJson.payload.authorization.data
+            //     );
+            // const [destChainId, paymentReceiver, endpointReceiver] =
+            //     ethers.utils.defaultAbiCoder.decode(
+            //         ['uint256', 'address', 'address'],
+            //         innerBytes
+            //     );
+
+            const destChainId = NETWORKS_DETAILS['base'].chainId;
+            const endpointReceiver = NETWORKS_DETAILS['base'].payementReceiver;
 
             const destNetworkDetails = NETWORKS_DETAILS[getChainNameById(destChainId)];
             const sourceNetworkDetails = NETWORKS_DETAILS[payloadJson.network];
@@ -132,9 +139,11 @@ export class EndpointRoute {
                 sourceProvider
             );
 
+            console.log(payloadJson)
+
             const { v, r, s } = ethers.utils.splitSignature(payloadJson.payload.signature);
 
-            const data = await sourceUSDOContract.populateTransaction.transferWithAuthorization(
+            const data = await sourceUSDOContract.populateTransaction['transferWithAuthorizationData(address,address,uint256,uint256,uint256,bytes32,bytes32,uint8,bytes32,bytes32)'](
                 payloadJson.payload.authorization.from,
                 payloadJson.payload.authorization.to,
                 payloadJson.payload.authorization.value,
@@ -145,18 +154,26 @@ export class EndpointRoute {
                 v, r, s
             );
 
+            const currentGasPrice = await sourceProvider.getGasPrice()
+            const gasPrice = currentGasPrice.mul(3).div(2);
+            const signer = WALLET.connect(sourceProvider);
+
             const tx = {
                 from: WALLET.address,
                 to: sourceNetworkDetails.USDOAddress,
                 data: data.data,
-                gasLimit: ethers.BigNumber.from(1000000)
+                gasLimit: ethers.BigNumber.from(1000000),
+                chainId: sourceNetworkDetails.chainId,
+                gasPrice: gasPrice,
+                nonce: await signer.getTransactionCount()
             };
 
             const gas = await sourceProvider.estimateGas(tx);
 
             const signedTx = await WALLET.signTransaction({
                 ...tx,
-                gasLimit: gas
+                gasLimit: gas,
+                chainId: sourceNetworkDetails.chainId
             });
 
             const txResponse = await sourceProvider.sendTransaction(signedTx);

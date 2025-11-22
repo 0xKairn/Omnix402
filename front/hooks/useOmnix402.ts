@@ -6,6 +6,7 @@ import {
   Omnix402Service,
   PaymentRequirements,
 } from "@/services/omnix402.service";
+import { signTypedData } from "@wagmi/core";
 
 export interface UseOmnix402Return {
   loading: boolean;
@@ -106,7 +107,7 @@ export function useOmnix402(): UseOmnix402Return {
         data: accept.data || "0x",
       };
 
-      const signature = await signTypedDataAsync({
+      const signature = await signTypedData(config, {
         domain,
         types,
         primaryType: "TransferWithAuthorization",
