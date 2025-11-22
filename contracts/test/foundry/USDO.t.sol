@@ -1,18 +1,32 @@
+// SPDX-License-Identifier: MIT
+
+pragma solidity ^0.8.20;
 import "forge-std/Test.sol";
-import "forge-std/console.sol";
+import "forge-std/console2.sol";
 
+import "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 import { USDO } from "../../contracts/USDO.sol";
+import { OmniRouter } from "../../contracts/OmniRouter.sol";
 
-contract USDO is Test {
-    address USDC = 0x833589fcd6edb6e08f4c7c32d4f71b54bda02913;
-
+contract USDOTest is Test {
+    address USDC = 0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913;
     address lzEndpointBase = 0x1a44076050125825900e736c501f859c50fE728c;
+    address owner;
 
     USDO usdo;
     OmniRouter omniRouter;
 
+    uint32 eidArbitrum = 30110;
+    uint32 eidBase = 30184;
+
+    uint256 baseChainId = 8453;
+    uint256 arbitrumChainId = 42161;
+
+    uint256 tokensToSend = 1 * 10 ** 6; // 10 tokens with 6 decimals
+
     function setUp() public {
-        owner = makeAddr("owner");
+        uint256 privateKey = vm.envUint("PRIVATE_KEY");
+        owner = vm.addr(privateKey);
         vm.startPrank(owner);
 
         omniRouter = new OmniRouter();
@@ -22,13 +36,15 @@ contract USDO is Test {
     }
 
     function test_transferWithAuthorization() public {
-        bytes32 nonce = keccak256(abi.encodePacked(block.timestamp, user, tokensToSend));
+        uint256 privateKey = vm.envUint("PRIVATE_KEY");
+        bytes32 nonce = keccak256(abi.encodePacked(block.timestamp));
 
-        bytes memory data = abi.encode(address(omniRouter)chainIdToSend, user);
+        bytes memory routerData = abi.encode(eidArbitrum, owner);
+        bytes memory data = abi.encode(address(omniRouter), routerData);
 
         (uint8 v, bytes32 r, bytes32 s) = _buildTransferWithAuthorization(
             usdo,
-            user,
+            owner,
             privateKey,
             address(usdo),
             tokensToSend,
@@ -37,7 +53,7 @@ contract USDO is Test {
         );
 
         usdo.transferWithAuthorization(
-            user,
+            owner,
             address(usdo),
             tokensToSend,
             block.timestamp - 100,
@@ -51,7 +67,7 @@ contract USDO is Test {
     }
 
     function _buildTransferWithAuthorization(
-        MyOFT token,
+        USDO token,
         address from,
         uint256 fromPK,
         address to,
@@ -77,5 +93,19 @@ contract USDO is Test {
 
         bytes32 digest = getTokenHashTypedData(structHash, token);
         (v, r, s) = vm.sign(fromPK, digest);
+    }
+
+    function getTokenHashTypedData(bytes32 structHash, USDO token) public view virtual returns (bytes32) {
+        bytes32 USDCDomainSeparator = keccak256(
+            abi.encode(
+                0x8b73c3c69bb8fe3d512ecc4cf759cc79239f7b179b0ffacaa9a75d522b39400f,
+                keccak256(bytes(token.name())),
+                keccak256(bytes("1")),
+                block.chainid,
+                address(token)
+            )
+        );
+
+        return MessageHashUtils.toTypedDataHash(USDCDomainSeparator, structHash);
     }
 }

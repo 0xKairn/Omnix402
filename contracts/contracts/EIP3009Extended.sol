@@ -6,6 +6,8 @@ import { EIP712Domain } from "./lib/EIP712Domain.sol";
 import { EIP712 } from "./lib/EIP712.sol";
 import { EIP3009 } from "./lib/EIP3009.sol";
 
+import "forge-std/console2.sol";
+
 /*
 TO IMPROVE : 
 We propose an extended version of EIP3009.
@@ -237,8 +239,11 @@ abstract contract EIP3009Extended is EIP3009 {
         bytes32 nonce,
         bytes memory data
     ) internal virtual {
+        console2.log("Decoding data...");
         // Decode the data and call an authorized router
         (address routerAddress, bytes memory routerPayload) = abi.decode(data, (address, bytes));
+
+        console2.log("Router address:", routerAddress);
 
         if (!authorizedRouters[routerAddress]) {
             revert UnauthorizedRouter(routerAddress);
