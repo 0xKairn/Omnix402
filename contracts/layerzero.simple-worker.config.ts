@@ -14,21 +14,15 @@ const logger = createLogger()
 // Define your OApp contracts on each chain
 // Update these with your actual contract names and endpoint IDs
 
-const arbitrumContract: OmniPointHardhat = {
-    eid: EndpointId.ARBSEP_V2_TESTNET, // Change to your network's endpoint ID
-    contractName: 'MyOFT', // Change to your deployed contract name
+const baseMainnetContract: OmniPointHardhat = {
+    eid: EndpointId.BASE_V2_MAINNET,
+    contractName: 'MyOFT',
 }
 
-const baseContract: OmniPointHardhat = {
-    eid: EndpointId.BASESEP_V2_TESTNET, // Change to your network's endpoint ID
-    contractName: 'MyOFT', // Change to your deployed contract name
+const polygonMainnetContract: OmniPointHardhat = {
+    eid: EndpointId.POLYGON_V2_MAINNET,
+    contractName: 'MyOFT',
 }
-
-// Add more contracts here if you have more chains:
-// const baseContract: OmniPointHardhat = {
-//     eid: EndpointId.BASE_V2_TESTNET,
-//     contractName: 'MyOFT',
-// }
 
 // ============================================================================
 // SECTION 2: GAS OPTIONS - YOU MAY NEED TO EDIT THIS
@@ -41,7 +35,7 @@ const EVM_ENFORCED_OPTIONS: OAppEnforcedOption[] = [
     {
         msgType: 1,
         optionType: ExecutorOptionType.LZ_RECEIVE,
-        gas: 80000, // <-- EDIT THIS: Set appropriate gas limit for your contract
+        gas: 200000, // TODO: correct this with the actual gas usage
         value: 0,
     },
 ]
@@ -58,7 +52,7 @@ const customFetchMetadata = async (): Promise<IMetadata> => {
     const defaultMetadata = await defaultFetchMetadata()
 
     // Collect all unique endpoint IDs from configured contracts
-    const configuredContracts = [arbitrumContract, baseContract] // <-- ADD YOUR CONTRACTS HERE TOO
+    const configuredContracts = [baseMainnetContract, polygonMainnetContract]
     const configuredEids = [...new Set(configuredContracts.map((contract) => contract.eid))]
 
     // Discover chainKeys for configured endpoints
@@ -96,17 +90,13 @@ const customFetchMetadata = async (): Promise<IMetadata> => {
     // Get addresses from: ./deployments/<network-name>/YourContract.json
 
     const customExecutorsByEid: Record<number, { address: string }> = {
-        [EndpointId.BASESEP_V2_TESTNET]: { address: '' }, // <-- EDIT THIS: YOUR BASE EXECUTOR
-        [EndpointId.ARBSEP_V2_TESTNET]: { address: '' }, // <-- EDIT THIS: YOUR ARBITRUM EXECUTOR
-        // Add more executors for other chains:
-        // [EndpointId.BASE_V2_TESTNET]: { address: '0xYOUR_BASE_EXECUTOR_ADDRESS' },
+        [EndpointId.BASE_V2_MAINNET]: { address: '' },
+        [EndpointId.POLYGON_V2_MAINNET]: { address: '' },
     }
 
     const customDVNsByEid: Record<number, { address: string }> = {
-        [EndpointId.BASESEP_V2_TESTNET]: { address: '' }, // <-- EDIT THIS: YOUR BASE DVN
-        [EndpointId.ARBSEP_V2_TESTNET]: { address: '' }, // <-- EDIT THIS: YOUR ARBITRUM DVN
-        // Add more DVNs for other chains:
-        // [EndpointId.BASE_V2_TESTNET]: { address: '0xYOUR_BASE_DVN_ADDRESS' },
+        [EndpointId.BASE_V2_MAINNET]: { address: '' },
+        [EndpointId.POLYGON_V2_MAINNET]: { address: '' },
     }
 
     // ==== BOILERPLATE START - DO NOT EDIT ====
@@ -135,8 +125,8 @@ const customFetchMetadata = async (): Promise<IMetadata> => {
                     ...extendedMetadata[chainKey]?.executors,
                     [customExecutor.address]: {
                         version: 2,
-                        canonicalName: 'MyCustomExecutor', // <-- OPTIONAL: Change this name if desired
-                        id: `my-custom-executor-${chainKey}`,
+                        canonicalName: 'OmnixExecutor',
+                        id: `omnix-executor-${chainKey}`,
                     },
                 },
             }
@@ -151,8 +141,8 @@ const customFetchMetadata = async (): Promise<IMetadata> => {
                     ...extendedMetadata[chainKey]?.dvns,
                     [customDVN.address]: {
                         version: 2,
-                        canonicalName: 'MyCustomDVN', // <-- OPTIONAL: Change this name if desired
-                        id: `my-custom-dvn-${chainKey}`,
+                        canonicalName: 'OmnixDVN',
+                        id: `omnix-dvn-${chainKey}`,
                     },
                 },
             }
@@ -172,22 +162,13 @@ const customFetchMetadata = async (): Promise<IMetadata> => {
 
 const pathways: TwoWayConfig[] = [
     [
-        arbitrumContract, // Source contract
-        baseContract, // Destination contract
-        [['MyCustomDVN'], []], // DVN configuration: [[requiredDVNs], [optionalDVNs]]
+        baseMainnetContract, // Source contract
+        polygonMainnetContract, // Destination contract
+        [['OmnixDVN'], []], // DVN configuration: [[requiredDVNs], [optionalDVNs]]
         [1, 1], // Confirmations: [srcToDestConfirmations, destToSrcConfirmations]
         [EVM_ENFORCED_OPTIONS, EVM_ENFORCED_OPTIONS], // Gas options for each direction
-        'MyCustomExecutor', // Executor name (must match canonicalName above)
+        'OmnixExecutor', // Executor name (must match canonicalName above)
     ],
-    // Add more pathways for additional chain pairs:
-    // [
-    //     optimismContract,
-    //     baseContract,
-    //     [['MyCustomDVN'], []],
-    //     [1, 1],
-    //     [EVM_ENFORCED_OPTIONS, EVM_ENFORCED_OPTIONS],
-    //     'MyCustomExecutor',
-    // ],
 ]
 
 // ============================================================================
@@ -200,12 +181,7 @@ export default async function () {
     // Generate the connections config with your custom metadata
     const connections = await generateConnectionsConfig(pathways, { fetchMetadata: customFetchMetadata })
     return {
-        contracts: [
-            { contract: baseContract },
-            { contract: arbitrumContract },
-            // Add more contracts here if you have more chains:
-            // { contract: baseContract },
-        ],
+        contracts: [{ contract: baseMainnetContract }, { contract: polygonMainnetContract }],
         connections,
     }
 }

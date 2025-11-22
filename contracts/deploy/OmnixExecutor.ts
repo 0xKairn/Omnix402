@@ -1,6 +1,6 @@
 import { type DeployFunction } from 'hardhat-deploy/types'
 
-const contractName = 'SimpleExecutorMock'
+const contractName = 'OmnixExecutor'
 
 const deploy: DeployFunction = async ({ getNamedAccounts, deployments, network }) => {
     console.log('Deploy script started...')
