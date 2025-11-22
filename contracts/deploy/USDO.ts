@@ -32,20 +32,20 @@ const deploy: DeployFunction = async ({ getNamedAccounts, deployments, network, 
 
     console.log(`✅ ${contractName} on ${network.name} deployed at: ${result.address}`)
 
-    // Get OmniRouter deployment
-    const omniRouter = await deployments.get('OmniRouter')
-    console.log(`>>> Found OmniRouter at: ${omniRouter.address}`)
+    // Get OmnixRouter deployment
+    const omnixRouter = await deployments.get('OmnixRouter')
+    console.log(`>>> Found OmnixRouter at: ${omnixRouter.address}`)
 
     // Get USDO contract instance
     const usdo = await ethers.getContractAt(contractName, result.address)
 
-    // Configure USDO to use OmniRouter
-    console.log('>>> Configuring USDO with OmniRouter...')
-    const setRouterTx = await usdo.setAuthorizedRouter(omniRouter.address, true)
+    // Configure USDO to use OmnixRouter
+    console.log('>>> Configuring USDO with OmnixRouter...')
+    const setRouterTx = await usdo.setAuthorizedRouter(omnixRouter.address, true)
     await setRouterTx.wait()
-    console.log('✅ OmniRouter authorized on USDO')
+    console.log('✅ OmnixRouter authorized on USDO')
 }
 
 deploy.tags = [contractName]
-deploy.dependencies = ['OmniRouter']
+deploy.dependencies = ['OmnixRouter']
 export default deploy

@@ -15,9 +15,7 @@ import {
     MessagingFee
 } from "@layerzerolabs/oft-evm/contracts/interfaces/IOFT.sol";
 
-import "forge-std/console2.sol";
-
-contract OmniRouter is Ownable {
+contract OmnixRouter is Ownable {
     using OptionsBuilder for bytes;
 
     constructor(address _owner) Ownable(_owner) {}
@@ -47,12 +45,8 @@ contract OmniRouter is Ownable {
         bytes32 nonce,
         bytes memory data
     ) external returns (bool) {
-        console2.log("OmniRouter execute called");
         OFT oft = OFT(msg.sender);
         (uint256 chainIdTo, address receiver) = abi.decode(data, (uint256, address));
-
-        console2.log("Executing OmniRouter to chainId:", chainIdTo);
-        console2.log("Receiver address:", receiver);
 
         if (chainIdTo == 0 || chainIdTo == block.chainid) {
             revert InvalidChainId();

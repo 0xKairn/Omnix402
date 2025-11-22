@@ -90,13 +90,13 @@ const customFetchMetadata = async (): Promise<IMetadata> => {
     // Get addresses from: ./deployments/<network-name>/YourContract.json
 
     const customExecutorsByEid: Record<number, { address: string }> = {
-        [EndpointId.BASE_V2_MAINNET]: { address: '' },
-        [EndpointId.POLYGON_V2_MAINNET]: { address: '' },
+        [EndpointId.BASE_V2_MAINNET]: { address: '0x4894cFD59ac3757e7de5FD302Ea8032F8aB71f65' },
+        [EndpointId.POLYGON_V2_MAINNET]: { address: '0x4894cFD59ac3757e7de5FD302Ea8032F8aB71f65' },
     }
 
     const customDVNsByEid: Record<number, { address: string }> = {
-        [EndpointId.BASE_V2_MAINNET]: { address: '' },
-        [EndpointId.POLYGON_V2_MAINNET]: { address: '' },
+        [EndpointId.BASE_V2_MAINNET]: { address: '0x5b0399fc7ee8d6f2DC21e57EFa54D9D3703702f2' },
+        [EndpointId.POLYGON_V2_MAINNET]: { address: '0x5b0399fc7ee8d6f2DC21e57EFa54D9D3703702f2' },
     }
 
     // ==== BOILERPLATE START - DO NOT EDIT ====

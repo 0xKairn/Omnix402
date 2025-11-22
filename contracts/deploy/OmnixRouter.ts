@@ -1,6 +1,6 @@
 import { type DeployFunction } from 'hardhat-deploy/types'
 
-const contractName = 'OmniRouter'
+const contractName = 'OmnixRouter'
 
 const deploy: DeployFunction = async ({ getNamedAccounts, deployments, network }) => {
     console.log('Deploy script started...')

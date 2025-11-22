@@ -65,7 +65,7 @@ const config: HardhatUserConfig = {
             eid: EndpointId.POLYGON_V2_MAINNET,
             url: process.env.RPC_URL_POLYGON || 'https://polygon-rpc.com',
             accounts,
-            gasPrice: 'auto',
+            gasPrice: 150000000000, // 150 gwei
             gasMultiplier: 1.5,
         },
         hardhat: {

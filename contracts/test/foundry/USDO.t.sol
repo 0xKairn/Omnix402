@@ -6,7 +6,7 @@ import "forge-std/console2.sol";
 
 import "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 import { USDO } from "../../contracts/USDO.sol";
-import { OmniRouter } from "../../contracts/OmniRouter.sol";
+import { OmnixRouter } from "../../contracts/OmnixRouter.sol";
 
 contract USDOTest is Test {
     address USDC = 0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913;
@@ -14,7 +14,7 @@ contract USDOTest is Test {
     address owner;
 
     USDO usdo;
-    OmniRouter omniRouter;
+    OmnixRouter omnixRouter;
 
     uint32 eidArbitrum = 30110;
     uint32 eidBase = 30184;
@@ -29,11 +29,11 @@ contract USDOTest is Test {
         owner = vm.addr(privateKey);
         vm.startPrank(owner);
 
-        omniRouter = new OmniRouter(owner);
-        omniRouter.setChainIdEidOFT(arbitrumChainId, eidArbitrum, address(omniRouter));
+        omnixRouter = new OmnixRouter(owner);
+        omnixRouter.setChainIdEidOFT(arbitrumChainId, eidArbitrum, address(omnixRouter));
         usdo = new USDO("USDO", "USDO", lzEndpointBase, owner, USDC);
 
-        usdo.setAuthorizedRouter(address(omniRouter), true);
+        usdo.setAuthorizedRouter(address(omnixRouter), true);
         usdo.setPeer(eidArbitrum, 0x0000000000000000000000002936944c6ab1f6f9dafdbd8ab050b4b3cd6eb223);
     }
 
@@ -42,13 +42,13 @@ contract USDOTest is Test {
         bytes32 nonce = keccak256(abi.encodePacked(block.timestamp));
 
         bytes memory routerData = abi.encode(arbitrumChainId, owner);
-        bytes memory data = abi.encode(address(omniRouter), routerData);
+        bytes memory data = abi.encode(address(omnixRouter), routerData);
 
         (uint8 v, bytes32 r, bytes32 s) = _buildTransferWithAuthorization(
             usdo,
             owner,
             privateKey,
-            address(omniRouter),
+            address(omnixRouter),
             tokensToSend,
             nonce,
             data
@@ -56,7 +56,7 @@ contract USDOTest is Test {
 
         usdo.transferWithAuthorization(
             owner,
-            address(omniRouter),
+            address(omnixRouter),
             tokensToSend,
             block.timestamp - 100,
             block.timestamp + 1000,
