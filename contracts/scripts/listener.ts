@@ -296,7 +296,7 @@ async function main() {
 
     console.log('\nListener started! Press Ctrl+C to stop.\n')
 
-    await new Promise(() => {})
+    await new Promise(() => { })
 }
 
 main()
