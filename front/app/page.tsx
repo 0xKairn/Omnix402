@@ -1,49 +1,13 @@
 import GridBackground from "./components/GridBackground";
-import Logo from "./components/Logo";
+import Header from "./components/Header";
+import Link from "next/link";
 
 export default function Home() {
   return (
     <div className="min-h-screen bg-black text-white font-sans selection:bg-white/15 cursor-default">
       <GridBackground />
 
-      <nav className="absolute top-0 w-full z-50 bg-transparent border-b border-white/5">
-        <div className="max-w-7xl mx-auto px-8 md:px-12 h-20 grid grid-cols-3 items-center">
-          <Logo size="md" />
-
-          <div className="flex items-center justify-center gap-8">
-            <a
-              href="#"
-              className="group relative text-xs font-bold uppercase tracking-widest text-white/60 hover:text-white transition-colors cursor-pointer"
-            >
-              <span className="absolute -left-4 opacity-0 group-hover:opacity-100 transition-opacity text-white/40">
-                [
-              </span>
-              Documentation
-              <span className="absolute -right-4 opacity-0 group-hover:opacity-100 transition-opacity text-white/40">
-                ]
-              </span>
-            </a>
-            <a
-              href="#"
-              className="group relative text-xs font-bold uppercase tracking-widest text-white/60 hover:text-white transition-colors cursor-pointer"
-            >
-              <span className="absolute -left-4 opacity-0 group-hover:opacity-100 transition-opacity text-white/40">
-                [
-              </span>
-              GitHub
-              <span className="absolute -right-4 opacity-0 group-hover:opacity-100 transition-opacity text-white/40">
-                ]
-              </span>
-            </a>
-          </div>
-
-          <div className="flex justify-end">
-            <button className="relative px-6 py-2 bg-white text-black text-xs font-bold uppercase tracking-wider transition-transform duration-300 hover:scale-105 border border-white cursor-pointer">
-              <span className="relative z-10">Launch App</span>
-            </button>
-          </div>
-        </div>
-      </nav>
+      <Header showConnectWallet={false} />
 
       <main className="relative z-10 px-8 md:px-12 pt-40 pb-32 min-h-screen flex items-center">
         <div className="max-w-7xl mx-auto w-full">
@@ -78,32 +42,36 @@ export default function Home() {
             </div>
 
             <div className="flex flex-col sm:flex-row gap-6">
-              <button className="group relative px-8 py-4 bg-black border border-white text-white overflow-hidden cursor-pointer">
-                <div className="absolute inset-0 bg-white -translate-x-full group-hover:translate-x-0 transition-transform duration-300 ease-out"></div>
-                <span className="relative z-10 text-sm font-bold tracking-[0.15em] group-hover:text-black transition-colors duration-300 flex items-center gap-3">
-                  START BUILDING
-                  <svg
-                    className="w-4 h-4 transition-transform duration-500 group-hover:translate-x-1"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth={2}
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M17 8l4 4m0 0l-4 4m4-4H3"
-                    />
-                  </svg>
-                </span>
-              </button>
+              <Link href="/home">
+                <button className="group relative px-8 py-4 bg-black border border-white text-white overflow-hidden cursor-pointer">
+                  <div className="absolute inset-0 bg-white -translate-x-full group-hover:translate-x-0 transition-transform duration-300 ease-out"></div>
+                  <span className="relative z-10 text-sm font-bold tracking-[0.15em] group-hover:text-black transition-colors duration-300 flex items-center gap-3">
+                    START BUILDING
+                    <svg
+                      className="w-4 h-4 transition-transform duration-500 group-hover:translate-x-1"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      strokeWidth={2}
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M17 8l4 4m0 0l-4 4m4-4H3"
+                      />
+                    </svg>
+                  </span>
+                </button>
+              </Link>
 
-              <button className="group relative px-8 py-4 bg-black border border-white text-white overflow-hidden cursor-pointer">
-                <div className="absolute inset-0 bg-white translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out"></div>
-                <span className="relative z-10 text-sm font-bold tracking-[0.15em] group-hover:text-black transition-colors duration-300">
-                  VIEW DOCUMENTATION
-                </span>
-              </button>
+              <a href="#" target="_blank" rel="noopener noreferrer">
+                <button className="group relative px-8 py-4 bg-black border border-white text-white overflow-hidden cursor-pointer">
+                  <div className="absolute inset-0 bg-white translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out"></div>
+                  <span className="relative z-10 text-sm font-bold tracking-[0.15em] group-hover:text-black transition-colors duration-300">
+                    VIEW DOCUMENTATION
+                  </span>
+                </button>
+              </a>
             </div>
           </div>
         </div>
