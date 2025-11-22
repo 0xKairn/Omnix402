@@ -236,7 +236,30 @@ abstract contract EIP3009Extended is EIP3009 {
         uint256 value,
         bytes32 nonce,
         bytes memory data
-    ) internal virtual;
+    ) internal virtual {
+        // Decode the data and call an authorized router
+        (address routerAddress, bytes memory routerPayload) = abi.decode(data, (address, bytes));
+
+        if (!authorizedRouters[routerAddress]) {
+            revert UnauthorizedRouter(routerAddress);
+        }
+
+        // Call router with clean input
+        (bool success, bytes memory ret) = routerAddress.call(
+            abi.encodeWithSignature(
+                "execute(address,address,uint256,bytes32,bytes)",
+                from,
+                to,
+                value,
+                nonce,
+                routerPayload
+            )
+        );
+
+        if (!success) {
+            revert ExecutionFailed(routerAddress, ret);
+        }
+    }
 
     function setAuthorizedRouter(address router, bool authorized) external virtual;
 }
