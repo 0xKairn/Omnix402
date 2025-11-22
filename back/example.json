@@ -1,0 +1,63 @@
+{
+    "x402Version": 1,
+    "accepts": [
+        {
+            "scheme": "exact",
+            "network": "base",
+            "maxAmountRequired": "10000",
+            "resource": "https://x402.lucyos.ai/x402/tools/analyze_token",
+            "description": "Payment for token analysis service ($0.01)",
+            "mimeType": "application/json",
+            "outputSchema": {
+                "input": {
+                    "type": "http",
+                    "method": "POST",
+                    "bodyType": "json",
+                    "headerFields": {
+                        "X-PAYMENT": {
+                            "type": "string",
+                            "required": false,
+                            "description": "Base64-encoded JSON PaymentPayload; automatically filled by x402scan"
+                        }
+                    },
+                    "bodyFields": {
+                        "token": {
+                            "type": "string",
+                            "required": true,
+                            "description": "Token address or symbol (e.g. BTC, ETH, SOL, etc.)"
+                        },
+                        "chain": {
+                            "type": "string",
+                            "required": false,
+                            "description": "Blockchain name (bsc, solana, ethereum, etc.)",
+                            "default": "bsc"
+                        },
+                        "language": {
+                            "type": "string",
+                            "required": false,
+                            "description": "Output language (English, Chinese, Korean, etc.)",
+                            "default": "English"
+                        }
+                    }
+                },
+                "output": {
+                    "token": "string",
+                    "chain": "string",
+                    "language": "string",
+                    "analysis": "object",
+                    "workflow_run_id": "string|null",
+                    "status": "string",
+                    "created_at": "string"
+                }
+            },
+            "payTo": "0xYourBasePaymentReceiverAddress",
+            "maxTimeoutSeconds": 300,
+            "asset": "0xYourUSDOContractAddress",
+            "extra": {
+                "name": "USDO",
+                "version": "1"
+            }
+        }
+    ],
+    "error": "Payment required. Please provide X-PAYMENT header."
+}
