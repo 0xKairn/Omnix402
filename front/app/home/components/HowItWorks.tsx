@@ -11,7 +11,8 @@ export default function HowItWorks() {
           </h3>
         </div>
         <p className="text-xs text-white/60 leading-relaxed font-mono">
-          Enter any X402 endpoint URL (more chains coming soon)
+          Enter the destination X402 endpoint URL you want to call (Base and
+          Polygon supported)
         </p>
       </div>
 
