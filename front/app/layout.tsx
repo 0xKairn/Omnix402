@@ -1,20 +1,21 @@
 import type { Metadata } from "next";
-import { Doto, JetBrains_Mono } from "next/font/google";
+import { Space_Grotesk, Azeret_Mono } from "next/font/google";
 import "./globals.css";
 
-const doto = Doto({
+const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
-  variable: "--font-doto",
+  variable: "--font-space-grotesk",
 });
 
-const jetbrainsMono = JetBrains_Mono({
+const azeretMono = Azeret_Mono({
   subsets: ["latin"],
-  variable: "--font-jetbrains-mono",
+  variable: "--font-azeret-mono",
 });
 
 export const metadata: Metadata = {
   title: "OMNIX402",
-  description: "x402 payment protocol",
+  description:
+    "Enabling agents to reach any X402 sellers from any chain through an OFT using custom EIP-3009",
 };
 
 export default function RootLayout({
@@ -25,7 +26,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${doto.variable} ${jetbrainsMono.variable} antialiased`}
+        className={`${spaceGrotesk.variable} ${azeretMono.variable} antialiased`}
       >
         {children}
       </body>

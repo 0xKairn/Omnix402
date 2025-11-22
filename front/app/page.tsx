@@ -1,46 +1,137 @@
+import GridBackground from "./components/GridBackground";
+import Logo from "./components/Logo";
+
 export default function Home() {
   return (
-    <div className="min-h-screen bg-black">
-      {/* Main content */}
-      <main className="relative z-10 flex min-h-screen flex-col items-center justify-center px-8">
-        <div className="flex flex-col items-center gap-12 text-center">
-          {/* Logo/Main title */}
-          <h1 className="text-7xl md:text-9xl font-bold tracking-wide dot-matrix-text">
-            OMNIX402
-          </h1>
+    <div className="min-h-screen bg-black text-white font-sans selection:bg-white/15 cursor-default">
+      <GridBackground />
 
-          {/* Subtitle */}
-          <p className="text-xl md:text-2xl text-white/60 tracking-wide max-w-2xl">
-            Payment protocol for the next generation of APIs
-          </p>
+      <nav className="absolute top-0 w-full z-50 bg-transparent border-b border-white/5">
+        <div className="max-w-7xl mx-auto px-8 md:px-12 h-20 grid grid-cols-3 items-center">
+          <Logo size="md" />
 
-          {/* Action buttons */}
-          <div className="flex flex-col sm:flex-row gap-4 mt-8">
-            <button className="px-8 py-4 border border-white/30 hover:border-white/60 transition-all duration-300 text-xl tracking-wide hover:bg-white/5">
-              GET STARTED
-            </button>
-            <button className="px-8 py-4 border border-white/30 hover:border-white/60 transition-all duration-300 text-xl tracking-wide hover:bg-white/5">
-              DOCUMENTATION
-            </button>
+          <div className="flex items-center justify-center gap-8">
+            <a
+              href="#"
+              className="group relative text-xs font-bold uppercase tracking-widest text-white/60 hover:text-white transition-colors cursor-pointer"
+            >
+              <span className="absolute -left-4 opacity-0 group-hover:opacity-100 transition-opacity text-white/40">
+                [
+              </span>
+              Documentation
+              <span className="absolute -right-4 opacity-0 group-hover:opacity-100 transition-opacity text-white/40">
+                ]
+              </span>
+            </a>
+            <a
+              href="#"
+              className="group relative text-xs font-bold uppercase tracking-widest text-white/60 hover:text-white transition-colors cursor-pointer"
+            >
+              <span className="absolute -left-4 opacity-0 group-hover:opacity-100 transition-opacity text-white/40">
+                [
+              </span>
+              GitHub
+              <span className="absolute -right-4 opacity-0 group-hover:opacity-100 transition-opacity text-white/40">
+                ]
+              </span>
+            </a>
           </div>
 
-          {/* Stats or info */}
-          <div className="flex gap-8 mt-16 text-sm text-white/40 tracking-wider">
-            <div className="flex flex-col items-center">
-              <span className="text-2xl text-white/80">402</span>
-              <span>PROTOCOL</span>
+          <div className="flex justify-end">
+            <button className="relative px-6 py-2 bg-white text-black text-xs font-bold uppercase tracking-wider transition-transform duration-300 hover:scale-105 border border-white cursor-pointer">
+              <span className="relative z-10">Launch App</span>
+            </button>
+          </div>
+        </div>
+      </nav>
+
+      <main className="relative z-10 px-8 md:px-12 pt-40 pb-32 min-h-screen flex items-center">
+        <div className="max-w-7xl mx-auto w-full">
+          <div className="flex flex-col gap-32">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-end">
+              <div className="lg:col-span-8 flex flex-col gap-8">
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="w-2 h-2 bg-white"></div>
+                  <div className="h-px w-12 bg-white/40"></div>
+                  <span className="text-[10px] tracking-[0.3em] uppercase font-mono text-white/50">
+                    Crosschain X402 Payments
+                  </span>
+                </div>
+
+                <h1 className="text-[6rem] md:text-[9rem] lg:text-[11rem] font-bold leading-[0.8] tracking-[-0.05em] text-white">
+                  OMNIX
+                  <span className="block text-zinc-500 ml-2 lg:ml-4">402</span>
+                </h1>
+              </div>
+
+              <div className="lg:col-span-4 flex flex-col justify-end pb-4 gap-8">
+                <div className="space-y-6 border-l border-white/20 pl-8">
+                  <p className="text-xl text-white leading-relaxed font-light">
+                    Enabling agents to reach any X402 sellers from any chain
+                    through an OFT using custom EIP-3009.
+                  </p>
+                  <p className="text-sm text-white/60 leading-relaxed font-mono">
+                    // Built on LayerZero OFT with USDO backed 1:1 by USDC.
+                  </p>
+                </div>
+              </div>
             </div>
-            <div className="flex flex-col items-center">
-              <span className="text-2xl text-white/80">BASE</span>
-              <span>NETWORK</span>
-            </div>
-            <div className="flex flex-col items-center">
-              <span className="text-2xl text-white/80">USDC</span>
-              <span>PAYMENTS</span>
+
+            <div className="flex flex-col sm:flex-row gap-6">
+              <button className="group relative px-8 py-4 bg-black border border-white text-white overflow-hidden cursor-pointer">
+                <div className="absolute inset-0 bg-white -translate-x-full group-hover:translate-x-0 transition-transform duration-300 ease-out"></div>
+                <span className="relative z-10 text-sm font-bold tracking-[0.15em] group-hover:text-black transition-colors duration-300 flex items-center gap-3">
+                  START BUILDING
+                  <svg
+                    className="w-4 h-4 transition-transform duration-500 group-hover:translate-x-1"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M17 8l4 4m0 0l-4 4m4-4H3"
+                    />
+                  </svg>
+                </span>
+              </button>
+
+              <button className="group relative px-8 py-4 bg-black border border-white text-white overflow-hidden cursor-pointer">
+                <div className="absolute inset-0 bg-white translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out"></div>
+                <span className="relative z-10 text-sm font-bold tracking-[0.15em] group-hover:text-black transition-colors duration-300">
+                  VIEW DOCUMENTATION
+                </span>
+              </button>
             </div>
           </div>
         </div>
       </main>
+
+      <footer className="relative z-50 bg-linear-to-t from-black via-black/95 to-transparent border-t border-white/10">
+        <div className="max-w-7xl mx-auto px-8 py-6 flex justify-between items-center">
+          <div className="flex items-center gap-3">
+            <span className="text-[10px] tracking-[0.2em] uppercase font-mono text-white/40">
+              v1.0.0
+            </span>
+          </div>
+          <div className="flex items-center gap-6 text-[10px] tracking-[0.2em] uppercase font-mono text-white/40">
+            <a
+              href="#"
+              className="hover:text-white transition-colors cursor-pointer"
+            >
+              GitHub
+            </a>
+            <a
+              href="#"
+              className="hover:text-white transition-colors cursor-pointer"
+            >
+              Documentation
+            </a>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }

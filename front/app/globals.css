@@ -3,58 +3,55 @@
 :root {
   --background: #000000;
   --foreground: #ffffff;
-  --dot-color: #ffffff;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-matrix: var(--font-doto);
-  --font-secondary: var(--font-jetbrains-mono);
+  --font-sans: var(--font-space-grotesk);
+  --font-mono: var(--font-azeret-mono);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-jetbrains-mono), monospace;
+  font-family: var(--font-sans), sans-serif;
+  overflow-x: hidden;
+  letter-spacing: -0.015em;
 }
 
-/* True dot matrix text effect */
-.dot-matrix-text {
-  font-family: var(--font-doto), sans-serif;
-  font-weight: 700;
-  letter-spacing: 0.15em;
-  line-height: 1.1;
+h1,
+h2,
+h3 {
+  font-family: var(--font-sans), sans-serif;
+  letter-spacing: -0.04em;
 }
 
-/* Alternative: dotted outline effect */
-.dot-outline-text {
-  font-weight: 700;
-  letter-spacing: 0.15em;
-  color: transparent;
-  -webkit-text-stroke: 2px white;
-  text-stroke: 2px white;
-  filter: drop-shadow(0 0 1px white) drop-shadow(0 0 2px white);
+.font-mono {
+  font-family: var(--font-mono), monospace;
+  letter-spacing: 0;
 }
 
-/* Dot grid background effect */
-.dot-grid {
-  background-image: radial-gradient(
-    circle,
-    rgba(255, 255, 255, 0.15) 1px,
-    transparent 1px
-  );
-  background-size: 20px 20px;
+/* Text selection */
+::selection {
+  background-color: rgba(255, 255, 255, 0.15);
+  color: white;
 }
 
-/* Fading dots gradient effect */
-.dot-fade {
-  background: radial-gradient(
-      ellipse at bottom,
-      transparent 0%,
-      rgba(255, 255, 255, 0.05) 50%,
-      transparent 100%
-    ),
-    radial-gradient(circle, rgba(255, 255, 255, 0.08) 1px, transparent 1px);
-  background-size: 100% 100%, 15px 15px;
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 3px;
+}
+
+::-webkit-scrollbar-track {
+  background: #000;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #222;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #444;
 }
