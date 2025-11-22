@@ -12,7 +12,10 @@ export function ConnectButton() {
         type="button"
         className="relative px-6 py-2 bg-white text-black text-xs font-bold uppercase tracking-wider transition-transform duration-300 hover:scale-105 border border-white cursor-pointer"
       >
-        <span className="relative z-10">Connect Wallet</span>
+        <span className="relative z-10">
+          <span className="md:hidden">Connect</span>
+          <span className="hidden md:inline">Connect Wallet</span>
+        </span>
       </button>
     );
   }
