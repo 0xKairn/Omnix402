@@ -18,12 +18,12 @@ to include one field name "data" of type bytes in the struct.
 abstract contract EIP3009Extended is EIP3009 {
     bytes32 public constant TRANSFER_WITH_AUTHORIZATION_EXTENDED_TYPEHASH =
         keccak256(
-            "TransferWithAuthorization(address from,address to,uint256 value,uint256 validAfter,uint256 validBefore,bytes32 nonce, bytes data)"
+            "TransferWithAuthorization(address from,address to,uint256 value,uint256 validAfter,uint256 validBefore,bytes32 nonce,bytes data)"
         );
 
     bytes32 public constant RECEIVE_WITH_AUTHORIZATION_EXTENDED_TYPEHASH =
         keccak256(
-            "ReceiveWithAuthorization(address from,address to,uint256 value,uint256 validAfter,uint256 validBefore,bytes32 nonce, bytes data)"
+            "ReceiveWithAuthorization(address from,address to,uint256 value,uint256 validAfter,uint256 validBefore,bytes32 nonce,bytes data)"
         );
 
     /// @notice Thrown when a required command has failed

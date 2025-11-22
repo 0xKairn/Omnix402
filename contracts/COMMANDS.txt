@@ -1,1 +1,1 @@
-forge test --match-contract USDO --fork-url https://base.gateway.tenderly.co -vvvv
+forge test --match-contract USDO --fork-url https://base.gateway.tenderly.co --via-ir -vvvv
