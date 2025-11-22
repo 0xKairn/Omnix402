@@ -94,7 +94,7 @@ export class Omnix402Service {
           validAfter: validAfter.toString(),
           validBefore: validBefore.toString(),
           nonce: nonce,
-          data: accept.data || "0x",
+          data: nonce,
         },
       },
     };

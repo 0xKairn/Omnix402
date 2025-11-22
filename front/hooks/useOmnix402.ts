@@ -86,31 +86,31 @@ export function useOmnix402(): UseOmnix402Return {
       };
 
       const types = {
-        TransferWithAuthorization: [
+        TransferWithAuthorizationData: [
           { name: "from", type: "address" },
           { name: "to", type: "address" },
           { name: "value", type: "uint256" },
           { name: "validAfter", type: "uint256" },
           { name: "validBefore", type: "uint256" },
           { name: "nonce", type: "bytes32" },
-          { name: "data", type: "bytes" },
+          { name: "data", type: "bytes32" },
         ],
       };
 
       const message = {
-        from: address as string,
-        to: accept.payTo,
-        value: accept.maxAmountRequired,
-        validAfter: validAfter.toString(),
-        validBefore: validBefore.toString(),
-        nonce: nonce,
-        data: accept.data || "0x",
+        from: address as `0x${string}`,
+        to: accept.payTo as `0x${string}`,
+        value: BigInt(accept.maxAmountRequired),
+        validAfter: BigInt(validAfter),
+        validBefore: BigInt(validBefore),
+        nonce: nonce as `0x${string}`,
+        data: nonce,
       };
 
       const signature = await signTypedData(config, {
         domain,
         types,
-        primaryType: "TransferWithAuthorization",
+        primaryType: "TransferWithAuthorizationData",
         message,
       });
 
