@@ -128,6 +128,33 @@ export class Omnix402Service {
   }
 
   /**
+   * Request a demo transaction (backend simulated)
+   */
+  static async requestDemo(): Promise<{
+    txHash: string;
+    status: string;
+    message: string;
+  }> {
+    const response = await fetch(`${API_URL}/demo`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+
+    const responseData = await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        responseData.error ||
+          `Demo request failed with status ${response.status}`
+      );
+    }
+
+    return responseData;
+  }
+
+  /**
    * Generate a random nonce for EIP-3009
    */
   static generateNonce(): string {
