@@ -16,12 +16,12 @@ const logger = createLogger()
 
 const baseMainnetContract: OmniPointHardhat = {
     eid: EndpointId.BASE_V2_MAINNET,
-    contractName: 'MyOFT',
+    contractName: 'USDO',
 }
 
 const polygonMainnetContract: OmniPointHardhat = {
     eid: EndpointId.POLYGON_V2_MAINNET,
-    contractName: 'MyOFT',
+    contractName: 'USDO',
 }
 
 // ============================================================================

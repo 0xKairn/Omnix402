@@ -38,7 +38,7 @@ contract USDO is OFT, EIP3009Extended {
 
         USDC = ERC20(_USDC);
 
-        // Only for test, in prod mint should be restricted to deposit/withdraw
+        // Only for test, in prod mint should be restricted to deposit/withdraw 
         _mint(msg.sender, 100000 * (10 ** _decimals));
     }
 
