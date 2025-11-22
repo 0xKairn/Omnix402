@@ -1,0 +1,33 @@
+{
+	"name": "omnix402-mcp-server",
+	"version": "1.0.0",
+	"description": "x402 MCP Example Client - demonstrates how to use the x402 payment protocol with MCP",
+	"type": "module",
+	"main": "dist/index.js",
+	"scripts": {
+		"build": "tsc",
+		"dev": "tsx src/index.ts",
+		"start": "node dist/index.js"
+	},
+	"keywords": [
+		"mcp",
+		"x402",
+		"payments",
+		"coinbase",
+		"ethereum"
+	],
+	"author": "",
+	"license": "MIT",
+	"dependencies": {
+		"@modelcontextprotocol/sdk": "^1.22.0",
+		"axios": "^1.7.9",
+		"dotenv": "^16.4.7",
+		"viem": "^2.33.2",
+		"x402-axios": "^0.7.0"
+	},
+	"devDependencies": {
+		"@types/node": "^22.10.5",
+		"tsx": "^4.19.2",
+		"typescript": "^5.7.2"
+	}
+}
