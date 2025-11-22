@@ -1,1 +1,10 @@
 forge test --match-contract USDO --fork-url https://base.gateway.tenderly.co --via-ir -vvvv
+
+
+forge script script/TransferAndSend.s.sol:TransferAndSend --fork-url https://base-mainnet.core.chainstack.com/88d169a026ebe2b2a5462a7e956435c1  --via-ir -vvvv  --broadcast
+
+https://base-mainnet.core.chainstack.com/88d169a026ebe2b2a5462a7e956435c1
+
+npx hardhat lz:simple-workers:skip --src-eid 30109 --src-oapp 0x88870B97f107957456F3CDd33EE1EF39A1FDC714 --nonce 1 --receiver 0x3f5Dbe3f44228774468d9A90232775270fbb1D31
+
+npx hardhat lz:simple-dvn:verify --src-eid 30109 --dst-eid 30184 --nonce 1 --src-oapp 0x88870B97f107957456F3CDd33EE1EF39A1FDC714 --to-address 0x3f5Dbe3f44228774468d9A90232775270fbb1D31 --amount 10000

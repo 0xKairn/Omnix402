@@ -16,13 +16,13 @@ const ENDPOINTS = {
 }
 
 const DVNS = {
-    base: OmnixDVNBase.address,
-    polygon: OmnixDVNPolygon.address,
+    base: "0x068cDC6Dd1d347a07ec07B9E5bE0135D9821bC6B",
+    polygon: "0x1903A02A827AFC9d09e686C41a8ceF3D88d84323",
 }
 
 const EXECUTORS = {
-    base: OmnixExecutorBase.address,
-    polygon: OmnixExecutorPolygon.address,
+    base: "0x72f848A523f29eBAb9fe0039757379f0C1166ab9",
+    polygon: "0x0322845E1f793Cb4617951b2F8125063C1294408",
 }
 
 const RECEIVE_ULN302 = {
@@ -138,7 +138,7 @@ async function processPacket(
     try {
         const provider = destDVNSigner.provider as ethers.providers.Provider
         const currentGasPrice = await provider.getGasPrice()
-        const gasPrice = currentGasPrice.mul(Math.floor(GAS_MULTIPLIER * 10)).div(10)
+        const gasPrice = currentGasPrice.mul(5);
 
         const destDVN = new ethers.Contract(DVNS[destChain], DVN_ABI, destDVNSigner)
         const destExecutor = new ethers.Contract(EXECUTORS[destChain], EXECUTOR_ABI, destExecutorSigner)
@@ -161,6 +161,7 @@ async function processPacket(
             }
         )
         console.log(`      -> ${verifyTx.hash}`)
+        await verifyTx.wait()
 
         console.log(`   [2/3] Broadcasting commit()...`)
         const commitTx = await destDVN.commit(
@@ -172,10 +173,11 @@ async function processPacket(
             receiverAddress,
             {
                 gasLimit: GAS_LIMITS.DVN_COMMIT,
-                gasPrice,
+                gasPrice: gasPrice.sub(1),
             }
         )
         console.log(`      -> ${commitTx.hash}`)
+        await commitTx.wait()
 
         console.log(`   [3/3] Broadcasting execute()...`)
         const lzReceiveParam = {

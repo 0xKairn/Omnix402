@@ -11,12 +11,11 @@ import "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 contract TransferAndSend is Script {
     using OptionsBuilder for bytes;
 
-    address omnixRouterAddressBase = 0xC1333a31EE5f3F302CB0428921f2908e6CAddEb1; // Base Mainnet OmniRouter address
-    address omnixRouterAddressPolygon = 0xC1333a31EE5f3F302CB0428921f2908e6CAddEb1; // Polygon One OmniRouter address
+    address omnixRouterAddressBase = 0xBDAD37BA2B3D62e1F0F083768c2b850072a5aC83; // Base Mainnet OmniRouter address
+    address omnixRouterAddressPolygon = 0xB7AE1928C64C97603ac6cBD0FD962Ac55A0ECb36; // Polygon One OmniRouter address
 
-    address usdoAddressBase = 0x5FAC7F2c99d9e06deff2f579FDE67a2eCDf0E0aC; // Base Mainnet Myusdo address
-    address usdoAddressPolygon = 0x5FAC7F2c99d9e06deff2f579FDE67a2eCDf0E0aC; // Polygon One Myusdo address
-
+    address usdoAddressBase = 0x3f5Dbe3f44228774468d9A90232775270fbb1D31; // Base Mainnet Myusdo address
+    address usdoAddressPolygon = 0x88870B97f107957456F3CDd33EE1EF39A1FDC714; // Polygon One Myusdo address
     uint32 eidPolygon = 30109;
     uint32 eidBase = 30184;
 
@@ -31,7 +30,7 @@ contract TransferAndSend is Script {
 
     function getUSDOAddress() internal view returns (address) {
         if (block.chainid == 8453) return usdoAddressBase; // Base
-        if (block.chainid == 42161) return usdoAddressPolygon; // Polygon
+        if (block.chainid == 137) return usdoAddressPolygon; // Polygon
         revert("Chain not supported");
     }
 
@@ -46,7 +45,7 @@ contract TransferAndSend is Script {
 
         bytes32 nonce = keccak256(abi.encodePacked(block.timestamp, user, tokensToSend));
 
-        bytes memory routerData = abi.encode(polygonChainId, user);
+        bytes memory routerData = abi.encode(polygonChainId, user, user);
         bytes memory data = abi.encode(address(omnixRouterAddressBase), routerData);
 
         (uint8 v, bytes32 r, bytes32 s) = _buildTransferWithAuthorization(
@@ -59,7 +58,7 @@ contract TransferAndSend is Script {
             data
         );
 
-        usdo.transferWithAuthorizationData(
+        usdo.transferWithAuthorization(
             user,
             address(omnixRouterAddressBase),
             tokensToSend,

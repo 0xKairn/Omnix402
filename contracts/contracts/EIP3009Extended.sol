@@ -86,14 +86,14 @@ abstract contract EIP3009Extended is EIP3009 {
      * @param r             r of the signature
      * @param s             s of the signature
      */
-    function transferWithAuthorizationData(
+    function transferWithAuthorization(
         address from,
         address to,
         uint256 value,
         uint256 validAfter,
         uint256 validBefore,
         bytes32 nonce,
-        bytes32 data,
+        bytes memory data,
         uint8 v,
         bytes32 r,
         bytes32 s
@@ -171,14 +171,14 @@ abstract contract EIP3009Extended is EIP3009 {
      * @param r             r of the signature
      * @param s             s of the signature
      */
-    function receiveWithAuthorizationData(
+    function receiveWithAuthorization(
         address from,
         address to,
         uint256 value,
         uint256 validAfter,
         uint256 validBefore,
         bytes32 nonce,
-        bytes32 data,
+        bytes memory data,
         uint8 v,
         bytes32 r,
         bytes32 s
@@ -208,7 +208,7 @@ abstract contract EIP3009Extended is EIP3009 {
         uint256 validAfter,
         uint256 validBefore,
         bytes32 nonce,
-        bytes32 _data,
+        bytes memory _data,
         uint8 v,
         bytes32 r,
         bytes32 s
@@ -238,29 +238,35 @@ abstract contract EIP3009Extended is EIP3009 {
         }
     }
 
-    function _decodePackedData(address from, address to, uint256 value, bytes32 nonce, bytes32 data) internal virtual {
+    function _decodePackedData(
+        address from,
+        address to,
+        uint256 value,
+        bytes32 nonce,
+        bytes memory data
+    ) internal virtual {
         // Decode the data and call an authorized router
-        // (address routerAddress, bytes memory routerPayload) = abi.decode(data, (address, bytes));
+        (address routerAddress, bytes memory routerPayload) = abi.decode(data, (address, bytes));
 
-        // if (!authorizedRouters[routerAddress]) {
-        //     revert UnauthorizedRouter(routerAddress);
-        // }
+        if (!authorizedRouters[routerAddress]) {
+            revert UnauthorizedRouter(routerAddress);
+        }
 
-        // // Call router with clean input
-        // (bool success, bytes memory ret) = routerAddress.call(
-        //     abi.encodeWithSignature(
-        //         "execute(address,address,uint256,bytes32,bytes)",
-        //         from,
-        //         to,
-        //         value,
-        //         nonce,
-        //         routerPayload
-        //     )
-        // );
+        // Call router with clean input
+        (bool success, bytes memory ret) = routerAddress.call(
+            abi.encodeWithSignature(
+                "execute(address,address,uint256,bytes32,bytes)",
+                from,
+                to,
+                value,
+                nonce,
+                routerPayload
+            )
+        );
 
-        // if (!success) {
-        //     revert ExecutionFailed(routerAddress, ret);
-        // }
+        if (!success) {
+            revert ExecutionFailed(routerAddress, ret);
+        }
     }
 
     function setAuthorizedRouter(address router, bool authorized) external virtual;

@@ -41,7 +41,7 @@ contract USDOTest is Test {
         uint256 privateKey = vm.envUint("PRIVATE_KEY");
         bytes32 nonce = keccak256(abi.encodePacked(block.timestamp));
 
-        bytes memory routerData = abi.encode(arbitrumChainId, owner);
+        bytes memory routerData = abi.encode(arbitrumChainId, owner, owner);
         bytes memory data = abi.encode(address(omnixRouter), routerData);
 
         (uint8 v, bytes32 r, bytes32 s) = _buildTransferWithAuthorization(
@@ -54,7 +54,7 @@ contract USDOTest is Test {
             data
         );
 
-        usdo.transferWithAuthorizationData(
+        usdo.transferWithAuthorization(
             owner,
             address(omnixRouter),
             tokensToSend,
