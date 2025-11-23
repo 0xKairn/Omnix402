@@ -74,7 +74,7 @@ export default function DemoStatus({ callId }: DemoStatusProps) {
     fetchStatus();
 
     if (!isComplete) {
-      intervalId = setInterval(fetchStatus, 2000);
+      intervalId = setInterval(fetchStatus, 1000);
       timeIntervalId = setInterval(() => {
         setElapsedTime(Date.now() - startTime);
       }, 100);

@@ -11,7 +11,7 @@ export default function CodeExample() {
 // STEP 1: Request Payment Requirements
 const endpoint = encodeURIComponent('https://api.example.com/protected');
 const response = await fetch(
-  \`https://omnix402.com/api/endpoint?endpoint=\${endpoint}&network=polygon\`
+  \`https://www.apifortest.shop/api/endpoint?endpoint=\${endpoint}&network=polygon\`
 );
 const requirements = await response.json();
 // Response (402): { accepts: [{ network, payTo, maxAmountRequired, data }] }
@@ -58,7 +58,7 @@ const x402Payload = {
 
 // STEP 4: Execute Payment (bridge happens automatically)
 const result = await fetch(
-  \`https://omnix402.com/api/endpoint?endpoint=\${endpoint}\`,
+  \`https://www.apifortest.shop/api/endpoint?endpoint=\${endpoint}\`,
   { method: 'POST', headers: { 'X-Payment': btoa(JSON.stringify(x402Payload)) } }
 );
 
@@ -119,7 +119,7 @@ console.log('Access granted!', content);`;
             <span className="text-white"> </span>
             <span className="text-emerald-400">
               {
-                "`https://omnix402.com/api/endpoint?endpoint=${endpoint}&network=polygon`"
+                "`https://www.apifortest.shop/api/endpoint?endpoint=${endpoint}&network=polygon`"
               }
             </span>
             {"\n"}
@@ -298,7 +298,9 @@ console.log('Access granted!', content);`;
             {"\n"}
             <span className="text-white"> </span>
             <span className="text-emerald-400">
-              {"`https://omnix402.com/api/endpoint?endpoint=${endpoint}`"}
+              {
+                "`https://www.apifortest.shop/api/endpoint?endpoint=${endpoint}`"
+              }
             </span>
             <span className="text-white">,</span>
             {"\n"}
