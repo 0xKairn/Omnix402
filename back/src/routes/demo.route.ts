@@ -1,11 +1,17 @@
 import { ethers } from "ethers";
 import { Router } from "express";
-import { NETWORKS_DETAILS, WALLET, PacketData, x402Payload } from "../const";
+import { NETWORKS_DETAILS, WALLET, PacketData, x402Payload, networkDetail } from "../const";
 import { CallRepository } from "../repositories/call.repository";
 import { checkIfDestHasEnoughUSDC, logError, decodePacket, logInfo, buildTransferAuthorizationDigest } from "../utils";
 import usdoABI from "../abis/usdo.abi.json";
 import omnixExecutorABI from "../abis/omnixExecutor.abi.json";
 import omnixDVNABI from "../abis/omnixDVN.abi.json";
+import { CdpClient } from "@coinbase/cdp-sdk";
+import { wrapFetchWithPayment, decodeXPaymentResponse } from "x402-fetch";
+import { toAccount } from "viem/accounts";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 export class DemoRoute {
     public router: Router = Router();
@@ -18,21 +24,50 @@ export class DemoRoute {
 
     private initializeRoutes() {
         this.router.get('/', this.demo);
+        this.router.get('/call', this.getCall);
     }
+
+    private getCall = async (req: any, res: any) => {
+        try {
+            const { callId } = req.query;
+            const call = await this.callRepository.getCallById(callId);
+            if (!call) {
+                return res.status(404).json({ error: 'Call not found' });
+            }
+            res.status(200).json(call);
+        } catch (error: any) {
+            logError(error);
+            res.status(500).json({ error: 'Internal server error' });
+        }
+    };
 
     private demo = async (req: any, res: any) => {
         try {
+            const cdp = new CdpClient();
+            const cdpAccount = await cdp.evm.getOrCreateAccount({
+                name: "Omnix402Signer"
+            });
+
+            const account = toAccount(cdpAccount);
+
             const demoURL = "https://proxy.x402scan.com/api/proxy?url=https%3A%2F%2Fpay.lnpay.ai%2Fresource&share_data=true";
             const sourceNetwork = "polygon"
+
+            logInfo(`Starting X402 demo flow`);
+            logInfo(`Fetching payment requirements from ${demoURL}`);
 
             const response = await fetch(demoURL, {
                 method: 'GET'
             });
 
-            const body = await response.json(); body.accepts[0];
+            const body = await response.json();
 
             const sourceNetworkDetails = NETWORKS_DETAILS[sourceNetwork];
             const destNetworkDetails = NETWORKS_DETAILS[body.accepts[0].network];
+
+            logInfo(`Payment required: ${body.accepts[0].maxAmountRequired} USDC`);
+            logInfo(`Source chain: ${sourceNetwork}, Destination chain: ${body.accepts[0].network}`);
+            logInfo(`Preparing cross-chain payment authorization...`);
 
             const hasEnoughUSDC = await checkIfDestHasEnoughUSDC(
                 destNetworkDetails,
@@ -134,8 +169,6 @@ export class DemoRoute {
                 chainId: sourceNetworkDetails.chainId
             });
 
-            console.log("Signed transaction:", signedTx);
-
             // before sending transaction, we can save it to the database only for demo purposes
             const call = await this.callRepository.createNewCall({
                 sourceChainName: sourceNetwork,
@@ -144,105 +177,106 @@ export class DemoRoute {
             });
 
             const txResponse = await sourceProvider.sendTransaction(signedTx);
+            logInfo(`Source payment submitted: ${txResponse.hash}`);
 
             // send response to the client
-            return res.status(200).json({
+            res.status(200).json({
                 callId: call._id
             });
 
-            // await this.callRepository.updateCall(call._id, {
-            //     sourcePaymentTxHash: txResponse.hash
-            // });
+            await this.callRepository.updateCall(call._id, {
+                sourcePaymentTxHash: txResponse.hash
+            });
 
-            // try {
-            //     const receipt = await txResponse.wait();
+            try {
+                const receipt = await txResponse.wait();
+                logInfo(`Source payment confirmed on ${sourceNetwork}`);
 
-            //     await this.callRepository.updateCall(call._id, {
-            //         sourcePaymentStatus: 'CONFIRMED'
-            //     });
+                await this.callRepository.updateCall(call._id, {
+                    sourcePaymentStatus: 'CONFIRMED'
+                });
 
-            //     // Extract PacketSent event
-            //     const ENDPOINT_ABI = ['event PacketSent(bytes encodedPayload, bytes options, address sendLibrary)']
-            //     const ISourceEndpoint = new ethers.utils.Interface(ENDPOINT_ABI);
+                // Extract PacketSent event
+                const ENDPOINT_ABI = ['event PacketSent(bytes encodedPayload, bytes options, address sendLibrary)']
+                const ISourceEndpoint = new ethers.utils.Interface(ENDPOINT_ABI);
 
-            //     let packetSentEventData: PacketData | null = null;
+                let packetSentEventData: PacketData | null = null;
 
-            //     for (const log of receipt.logs) {
-            //         try {
-            //             const parsedLog = ISourceEndpoint.parseLog(log);
-            //             if (parsedLog.name === 'PacketSent') {
-            //                 packetSentEventData = decodePacket(parsedLog.args.encodedPayload);
-            //                 break;
-            //             }
-            //         } catch (e) {
-            //             continue;
-            //         }
-            //     }
+                for (const log of receipt.logs) {
+                    try {
+                        const parsedLog = ISourceEndpoint.parseLog(log);
+                        if (parsedLog.name === 'PacketSent') {
+                            packetSentEventData = decodePacket(parsedLog.args.encodedPayload);
+                            break;
+                        }
+                    } catch (e) {
+                        continue;
+                    }
+                }
 
-            //     if (!packetSentEventData) {
-            //         logError(`PacketSent event not found in transaction logs.`);
-            //         await this.callRepository.updateCall(call._id, {
-            //             sourcePaymentStatus: 'FAILED'
-            //         });
-            //         return;
-            //     }
+                if (!packetSentEventData) {
+                    logError(`PacketSent event not found in transaction logs`);
+                    await this.callRepository.updateCall(call._id, {
+                        sourcePaymentStatus: 'FAILED'
+                    });
+                    return;
+                }
 
-            //     // Process packet on destination chain
-            //     try {
-            //         const txHashes = await this.processPacket(destNetworkDetails, packetSentEventData, receipt.transactionHash);
+                logInfo(`Processing cross-chain message on ${body.accepts[0].network}...`);
 
-            //         await this.callRepository.updateCall(call._id, {
-            //             verifyStatus: 'CONFIRMED',
-            //             verifyHash: txHashes.verifyTxHash,
-            //             relayStatus: 'CONFIRMED',
-            //             relayHash: txHashes.commitTxHash,
-            //             executionStatus: 'CONFIRMED',
-            //             executionHash: txHashes.executeTxHash
-            //         });
+                // Process packet on destination chain
+                try {
+                    const txHashes = await this.processPacket(destNetworkDetails, packetSentEventData, receipt.transactionHash);
 
-            //         // Build response payload and call the API
-            //         try {
-            //             const responsePayload = await this.buildResponsePayload(
-            //                 body.accepts[0].maxAmountRequired,
-            //                 destNetworkDetails,
-            //                 body.accepts[0].payTo
-            //             );
+                    await this.callRepository.updateCall(call._id, {
+                        verifyStatus: 'CONFIRMED',
+                        verifyHash: txHashes.verifyTxHash,
+                        relayStatus: 'CONFIRMED',
+                        relayHash: txHashes.commitTxHash,
+                        executionStatus: 'CONFIRMED',
+                        executionHash: txHashes.executeTxHash
+                    });
 
-            //             const base64Payload = Buffer.from(JSON.stringify(responsePayload)).toString('base64');
+                    logInfo(`Cross-chain execution completed successfully`);
+                    logInfo(`Requesting protected resource with X402 payment proof...`);
 
-            //             const apiResponse = await fetch(demoURL, {
-            //                 method: 'GET',
-            //                 headers: {
-            //                     'Content-Type': 'application/json',
-            //                     'X-Payment': base64Payload
-            //                 },
-            //             });
+                    // Build response payload and call the API
+                    try {
+                        const fetchWithPayment = wrapFetchWithPayment(fetch, account);
 
-            //             const responseBody = await apiResponse.json();
-            //             const xPaymentResponse = apiResponse.headers.get('X-Payment-Response');
+                        const response = await fetchWithPayment(demoURL, {
+                            method: "GET",
+                        })
 
-            //             await this.callRepository.updateCall(call._id, {
-            //                 xPaymentResponse: xPaymentResponse
-            //             });
+                        const body = await response.json();
 
-            //             logInfo(`Demo call ${call._id} completed successfully with X-Payment-Response`);
-            //         } catch (error) {
-            //             logError(`Error calling API for call ${call._id}: ${error}`);
-            //         }
-            //     } catch (error) {
-            //         logError(`Error processing packet for call ${call._id}: ${error}`);
-            //         await this.callRepository.updateCall(call._id, {
-            //             verifyStatus: 'FAILED',
-            //             relayStatus: 'FAILED',
-            //             executionStatus: 'FAILED'
-            //         });
-            //     }
+                        const paymentResponse = decodeXPaymentResponse(response.headers.get("x-payment-response")!);
 
-            // } catch (error) {
-            //     await this.callRepository.updateCall(call._id, {
-            //         sourcePaymentStatus: 'FAILED'
-            //     });
-            // }
+                        await this.callRepository.updateCall(call._id, {
+                            xPaymentResponse: paymentResponse,
+                            bodyResponse: body
+                        });
+
+                        logInfo(`✓ X402 flow completed successfully! Call ID: ${call._id}`);
+                        logInfo(`Protected resource accessed with payment proof`);
+                        logInfo(`Payment response: ${JSON.stringify(paymentResponse)}`);;
+                    } catch (error) {
+                        logError(`Error calling API for call ${call._id}: ${error}`);
+                    }
+                } catch (error) {
+                    logError(`Error processing packet for call ${call._id}: ${error}`);
+                    await this.callRepository.updateCall(call._id, {
+                        verifyStatus: 'FAILED',
+                        relayStatus: 'FAILED',
+                        executionStatus: 'FAILED'
+                    });
+                }
+
+            } catch (error) {
+                await this.callRepository.updateCall(call._id, {
+                    sourcePaymentStatus: 'FAILED'
+                });
+            }
         } catch (error) {
             logError(`Error in demo endpoint: ${error}`);
             res.status(500).json({ error: 'Internal Server Error' });
@@ -355,52 +389,12 @@ export class DemoRoute {
             executeTxResponse.wait(),
         ]);
 
-        logInfo(`Processed packet on chainId ${networkDetails.chainId} for receiver ${packet.receiver} from source tx ${sourceTxHash}`);
+        logInfo(`Destination transactions confirmed: verify, commit, and execute completed`);;
 
         return {
             verifyTxHash: verifyTxResponse.hash,
             commitTxHash: commitTxResponse.hash,
             executeTxHash: executeTxResponse.hash
         };
-    }
-
-    async buildResponsePayload(
-        value: string | number,
-        destNetworkDetails: any,
-        endpointReceiver: string
-    ): Promise<x402Payload> {
-        const now = new Date();
-        const nonce = ethers.utils.hexlify(ethers.utils.randomBytes(32));
-
-        const digest = buildTransferAuthorizationDigest(
-            WALLET.address,
-            endpointReceiver,
-            typeof value === 'string' ? value : value.toString(),
-            Math.floor(now.getTime() / 1000),
-            Math.floor((now.getTime() / 1000) + 3600),
-            nonce
-        )
-        const signingKey = new ethers.utils.SigningKey(WALLET.privateKey);
-        const { v, r, s } = signingKey.signDigest(digest);
-        const signature = ethers.utils.joinSignature({ v, r, s });
-
-        const responsePayload: x402Payload = {
-            x402Version: 1,
-            scheme: 'exact',
-            network: destNetworkDetails.name,
-            payload: {
-                signature: signature,
-                authorization: {
-                    from: WALLET.address,
-                    to: endpointReceiver,
-                    value: typeof value === 'string' ? value : value.toString(),
-                    validAfter: Math.floor(now.getTime() / 1000).toString(),
-                    validBefore: (Math.floor((now.getTime() / 1000) + 3600)).toString(),
-                    nonce: nonce,
-                },
-            }
-        }
-
-        return responsePayload;
     }
 }

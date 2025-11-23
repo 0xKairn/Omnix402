@@ -12,6 +12,8 @@ import { NETWORKS_DETAILS, WALLET } from './const';
 import usdoABI from './abis/usdo.abi.json';
 import { CallRepository } from './repositories/call.repository';
 import { DemoRoute } from './routes/demo.route';
+import { CdpClient } from '@coinbase/cdp-sdk';
+import { toAccount } from 'viem/accounts';
 
 const app = express();
 

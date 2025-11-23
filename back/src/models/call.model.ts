@@ -11,7 +11,8 @@ const callSchema = new Schema({
     relayHash: { type: String, required: false },
     executionStatus: { type: String, enum: ['PENDING', 'CONFIRMED', 'FAILED'], required: false },
     executionHash: { type: String, required: false },
-    xPaymentResponse: { type: Schema.Types.Mixed, required: false }
+    xPaymentResponse: { type: Schema.Types.Mixed, required: false },
+    bodyResponse: { type: Schema.Types.Mixed, required: false }
 }, {
     timestamps: true,
 });

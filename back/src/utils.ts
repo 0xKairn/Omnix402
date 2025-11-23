@@ -35,7 +35,7 @@ export async function checkIfDestHasEnoughUSDC(
             provider
         );
 
-        const balance: ethers.BigNumber = await usdoContract.balanceOf(networkDetail.payementReceiver);
+        const balance: ethers.BigNumber = await usdoContract.balanceOf(networkDetail.USDOAddress);
         const amountBN = ethers.BigNumber.from(amount);
 
         return balance.gte(amountBN);
