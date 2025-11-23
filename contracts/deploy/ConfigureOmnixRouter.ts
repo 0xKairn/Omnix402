@@ -22,7 +22,7 @@ const deploy: DeployFunction = async ({ deployments, network, ethers }) => {
         remoteEid = EndpointId.POLYGON_V2_MAINNET
         try {
             const polygonUSDO = await deployments.get('USDO')
-            remoteUSDO = '0xCEf55930Fea9E468D6Cd079F252604ba2EC65352'
+            remoteUSDO = polygonUSDO.address
         } catch {
             console.log('⚠️  USDO not yet deployed on Polygon, skipping configuration')
             return
@@ -33,7 +33,7 @@ const deploy: DeployFunction = async ({ deployments, network, ethers }) => {
         remoteEid = EndpointId.BASE_V2_MAINNET
         try {
             const baseUSDO = await deployments.get('USDO')
-            remoteUSDO = '0xCEf55930Fea9E468D6Cd079F252604ba2EC65352'
+            remoteUSDO = baseUSDO.address
         } catch {
             console.log('⚠️  USDO not yet deployed on Base, skipping configuration')
             return

@@ -18,12 +18,12 @@ to include one field name "data" of type bytes in the struct.
 abstract contract EIP3009Extended is EIP3009 {
     bytes32 public constant TRANSFER_WITH_AUTHORIZATION_EXTENDED_TYPEHASH =
         keccak256(
-            "TransferWithAuthorization(address from,address to,uint256 value,uint256 validAfter,uint256 validBefore,bytes32 nonce,bytes data)"
+            "TransferWithAuthorization(address from,address to,uint256 value,uint256 validAfter,uint256 validBefore,bytes32 nonce, bytes data)"
         );
 
     bytes32 public constant RECEIVE_WITH_AUTHORIZATION_EXTENDED_TYPEHASH =
         keccak256(
-            "ReceiveWithAuthorization(address from,address to,uint256 value,uint256 validAfter,uint256 validBefore,bytes32 nonce,bytes data)"
+            "ReceiveWithAuthorization(address from,address to,uint256 value,uint256 validAfter,uint256 validBefore,bytes32 nonce, bytes data)"
         );
 
     /// @notice Thrown when a required command has failed
@@ -59,7 +59,7 @@ abstract contract EIP3009Extended is EIP3009 {
         bytes32 s
     ) external override {
         _transferWithAuthorization(
-            TRANSFER_WITH_AUTHORIZATION_TYPEHASH,
+            TRANSFER_WITH_AUTHORIZATION_EXTENDED_TYPEHASH,
             from,
             to,
             value,
@@ -142,7 +142,7 @@ abstract contract EIP3009Extended is EIP3009 {
         require(to == msg.sender, "EIP3009: caller must be the payee");
 
         _transferWithAuthorization(
-            RECEIVE_WITH_AUTHORIZATION_TYPEHASH,
+            RECEIVE_WITH_AUTHORIZATION_EXTENDED_TYPEHASH,
             from,
             to,
             value,
@@ -217,24 +217,16 @@ abstract contract EIP3009Extended is EIP3009 {
         require(block.timestamp < validBefore, "EIP3009: authorization is expired");
         require(!_authorizationStates[from][nonce], _AUTHORIZATION_USED_ERROR);
 
+        bytes memory data = abi.encode(typeHash, from, to, value, validAfter, validBefore, nonce, _data);
+        require(EIP712.recover(DOMAIN_SEPARATOR, v, r, s, data) == from, _INVALID_SIGNATURE_ERROR);
+
+        _authorizationStates[from][nonce] = true;
+        emit AuthorizationUsed(from, nonce);
+
+        _update(from, to, value);
+
         if (_data.length > 0) {
-            bytes memory data = abi.encode(typeHash, from, to, value, validAfter, validBefore, nonce, _data);
-            require(EIP712.recover(DOMAIN_SEPARATOR, v, r, s, data) == from, _INVALID_SIGNATURE_ERROR);
-
-            _authorizationStates[from][nonce] = true;
-            emit AuthorizationUsed(from, nonce);
-
-            _update(from, to, value);
-
             _decodePackedData(from, to, value, nonce, _data);
-        } else {
-            bytes memory data = abi.encode(typeHash, from, to, value, validAfter, validBefore, nonce);
-            require(EIP712.recover(DOMAIN_SEPARATOR, v, r, s, data) == from, _INVALID_SIGNATURE_ERROR);
-
-            _authorizationStates[from][nonce] = true;
-            emit AuthorizationUsed(from, nonce);
-
-            _update(from, to, value);
         }
     }
 

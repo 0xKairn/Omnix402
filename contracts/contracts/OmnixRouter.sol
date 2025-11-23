@@ -46,7 +46,7 @@ contract OmnixRouter is Ownable {
         bytes memory data
     ) external returns (bool) {
         OFT oft = OFT(msg.sender);
-        (uint256 chainIdTo, address receiver, address endpointReceiver) = abi.decode(data, (uint256, address, address));
+        (uint256 chainIdTo, address receiver) = abi.decode(data, (uint256, address));
 
         if (chainIdTo == 0 || chainIdTo == block.chainid) {
             revert InvalidChainId();
@@ -64,7 +64,7 @@ contract OmnixRouter is Ownable {
             amountLD: value,
             minAmountLD: value,
             extraOptions: extraOptions,
-            composeMsg: abi.encode(nonce, receiver, endpointReceiver),
+            composeMsg: abi.encode(nonce, receiver, from),
             oftCmd: bytes("")
         });
 

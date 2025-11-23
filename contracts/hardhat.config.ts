@@ -27,8 +27,8 @@ const PRIVATE_KEY = process.env.PRIVATE_KEY
 const accounts: HttpNetworkAccountsUserConfig | undefined = MNEMONIC
     ? { mnemonic: MNEMONIC }
     : PRIVATE_KEY
-        ? [PRIVATE_KEY]
-        : undefined
+      ? [PRIVATE_KEY]
+      : undefined
 
 if (accounts == null) {
     console.warn(
@@ -65,7 +65,7 @@ const config: HardhatUserConfig = {
             eid: EndpointId.POLYGON_V2_MAINNET,
             url: process.env.RPC_URL_POLYGON || 'https://polygon-rpc.com',
             accounts,
-            gasPrice: 150000000000, // 150 gwei
+            gasPrice: 300000000000, // 150 gwei
             gasMultiplier: 1.5,
         },
         hardhat: {
