@@ -128,12 +128,10 @@ export class Omnix402Service {
    * Request a demo transaction (backend simulated)
    */
   static async requestDemo(): Promise<{
-    txHash: string;
-    status: string;
-    message: string;
+    callId: string;
   }> {
     const response = await fetch(`${API_URL}/demo`, {
-      method: "POST",
+      method: "GET",
       headers: {
         "Content-Type": "application/json",
       },
@@ -145,6 +143,44 @@ export class Omnix402Service {
       throw new Error(
         responseData.error ||
           `Demo request failed with status ${response.status}`
+      );
+    }
+
+    return responseData;
+  }
+
+  /**
+   * Get call status by ID
+   */
+  static async getCallStatus(callId: string): Promise<{
+    sourceChainName: string;
+    destinationChainName: string;
+    sourcePaymentStatus?: string;
+    sourcePaymentTxHash?: string;
+    verifyStatus?: string;
+    verifyHash?: string;
+    relayStatus?: string;
+    relayHash?: string;
+    executionStatus?: string;
+    executionHash?: string;
+    destPaymentHash?: string;
+    xPaymentResponse?: any;
+    createdAt?: string;
+    updatedAt?: string;
+  }> {
+    const response = await fetch(`${API_URL}/demo/call?callId=${callId}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+
+    const responseData = await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        responseData.error ||
+          `Failed to get call status with status ${response.status}`
       );
     }
 
