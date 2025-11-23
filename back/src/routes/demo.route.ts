@@ -2,7 +2,7 @@ import { ethers } from "ethers";
 import { Router } from "express";
 import { NETWORKS_DETAILS, WALLET, PacketData, x402Payload, networkDetail } from "../const";
 import { CallRepository } from "../repositories/call.repository";
-import { checkIfDestHasEnoughUSDC, logError, decodePacket, logInfo, buildTransferAuthorizationDigest } from "../utils";
+import { checkIfDestHasEnoughUSDC, logError, decodePacket, logInfo, buildTransferAuthorizationDigest, logWarning, logSuccess } from "../utils";
 import usdoABI from "../abis/usdo.abi.json";
 import omnixExecutorABI from "../abis/omnixExecutor.abi.json";
 import omnixDVNABI from "../abis/omnixDVN.abi.json";
@@ -15,6 +15,8 @@ dotenv.config();
 
 export class DemoRoute {
     public router: Router = Router();
+
+    private demoRunning: boolean = false;
 
     constructor(
         private callRepository: CallRepository
@@ -43,6 +45,12 @@ export class DemoRoute {
 
     private demo = async (req: any, res: any) => {
         try {
+            if (this.demoRunning) {
+                logWarning(`[DEMO] Demo already running. Please wait until the current demo finishes.`);
+                return res.status(429).json({ error: 'Demo already running. Please wait.' });
+            }
+            this.demoRunning = true;
+
             const cdp = new CdpClient();
             const cdpAccount = await cdp.evm.getOrCreateAccount({
                 name: "Omnix402Signer"
@@ -53,8 +61,8 @@ export class DemoRoute {
             const demoURL = "https://proxy.x402scan.com/api/proxy?url=https%3A%2F%2Fpay.lnpay.ai%2Fresource&share_data=true";
             const sourceNetwork = "polygon"
 
-            logInfo(`Starting X402 demo flow`);
-            logInfo(`Fetching payment requirements from ${demoURL}`);
+            logInfo(`[DEMO] Starting X402 demo flow`);
+            logInfo(`[DEMO] Fetching payment requirements from ${demoURL}`);
 
             const response = await fetch(demoURL, {
                 method: 'GET'
@@ -65,9 +73,9 @@ export class DemoRoute {
             const sourceNetworkDetails = NETWORKS_DETAILS[sourceNetwork];
             const destNetworkDetails = NETWORKS_DETAILS[body.accepts[0].network];
 
-            logInfo(`Payment required: ${body.accepts[0].maxAmountRequired} USDC`);
-            logInfo(`Source chain: ${sourceNetwork}, Destination chain: ${body.accepts[0].network}`);
-            logInfo(`Preparing cross-chain payment authorization...`);
+            logInfo(`[DEMO] Payment required: ${body.accepts[0].maxAmountRequired / 10 ** 6} USDC`);
+            logInfo(`[DEMO] Source chain: ${sourceNetwork}, Destination chain: ${body.accepts[0].network}`);
+            logInfo(`[DEMO] Preparing cross-chain payment authorization...`);
 
             const hasEnoughUSDC = await checkIfDestHasEnoughUSDC(
                 destNetworkDetails,
@@ -75,6 +83,8 @@ export class DemoRoute {
             );
 
             if (!hasEnoughUSDC) {
+                logError(`[DEMO] Insufficient USDC balance in destination ${body.accepts[0].network}`);
+                this.demoRunning = false;
                 return res.status(400).json({ error: 'Insufficient USDC balance in destination' });
             }
 
@@ -148,7 +158,7 @@ export class DemoRoute {
             );
 
             const currentGasPrice = await sourceProvider.getGasPrice()
-            const gasPrice = currentGasPrice.mul(3).div(2);
+            const gasPrice = currentGasPrice.mul(2);
             const signer = WALLET.connect(sourceProvider);
 
             const tx = {
@@ -177,7 +187,7 @@ export class DemoRoute {
             });
 
             const txResponse = await sourceProvider.sendTransaction(signedTx);
-            logInfo(`Source payment submitted: ${txResponse.hash}`);
+            logInfo(`[DEMO] Source payment submitted: ${txResponse.hash}`);
 
             // send response to the client
             res.status(200).json({
@@ -189,8 +199,8 @@ export class DemoRoute {
             });
 
             try {
-                const receipt = await txResponse.wait();
-                logInfo(`Source payment confirmed on ${sourceNetwork}`);
+                const receipt = await txResponse.wait(1);
+                logSuccess(`[DEMO] Source payment confirmed on ${sourceNetwork}`);
 
                 await this.callRepository.updateCall(call._id, {
                     sourcePaymentStatus: 'CONFIRMED'
@@ -215,14 +225,16 @@ export class DemoRoute {
                 }
 
                 if (!packetSentEventData) {
-                    logError(`PacketSent event not found in transaction logs`);
+                    logError(`[DEMO] PacketSent event not found in transaction logs`);
                     await this.callRepository.updateCall(call._id, {
                         sourcePaymentStatus: 'FAILED'
                     });
+
+                    this.demoRunning = false;
                     return;
                 }
 
-                logInfo(`Processing cross-chain message on ${body.accepts[0].network}...`);
+                logInfo(`[DEMO] Processing cross-chain message on ${body.accepts[0].network}...`);
 
                 // Process packet on destination chain
                 try {
@@ -237,8 +249,8 @@ export class DemoRoute {
                         executionHash: txHashes.executeTxHash
                     });
 
-                    logInfo(`Cross-chain execution completed successfully`);
-                    logInfo(`Requesting protected resource with X402 payment proof...`);
+                    logSuccess(`[DEMO] Cross-chain execution completed successfully`);
+                    logInfo(`[DEMO] Requesting protected resource with X402 payment proof...`);
 
                     // Build response payload and call the API
                     try {
@@ -253,18 +265,20 @@ export class DemoRoute {
                         const paymentResponse = decodeXPaymentResponse(response.headers.get("x-payment-response")!);
 
                         await this.callRepository.updateCall(call._id, {
+                            destPaymentStatus: 'CONFIRMED',
+                            destPaymentTxHash: paymentResponse.transaction,
                             xPaymentResponse: paymentResponse,
                             bodyResponse: body
                         });
 
-                        logInfo(`✓ X402 flow completed successfully! Call ID: ${call._id}`);
-                        logInfo(`Protected resource accessed with payment proof`);
-                        logInfo(`Payment response: ${JSON.stringify(paymentResponse)}`);;
+                        logSuccess(`[DEMO] X402 flow completed successfully! Call ID: ${call._id}`);
+                        logSuccess(`[DEMO] Protected resource accessed with payment proof`);
+                        logInfo(`[DEMO] Payment response: ${JSON.stringify(paymentResponse)}`);;
                     } catch (error) {
-                        logError(`Error calling API for call ${call._id}: ${error}`);
+                        logError(`[DEMO] Error calling API for call ${call._id}: ${error}`);
                     }
                 } catch (error) {
-                    logError(`Error processing packet for call ${call._id}: ${error}`);
+                    logError(`[DEMO] Error processing packet for call ${call._id}: ${error}`);
                     await this.callRepository.updateCall(call._id, {
                         verifyStatus: 'FAILED',
                         relayStatus: 'FAILED',
@@ -278,7 +292,7 @@ export class DemoRoute {
                 });
             }
         } catch (error) {
-            logError(`Error in demo endpoint: ${error}`);
+            logError(`[DEMO] Error in demo endpoint: ${error}`);
             res.status(500).json({ error: 'Internal Server Error' });
         }
     }
@@ -293,7 +307,7 @@ export class DemoRoute {
         const signer = WALLET.connect(provider);
 
         const currentGasPrice = await provider.getGasPrice()
-        const gasPrice = currentGasPrice.mul(3).div(2);
+        const gasPrice = currentGasPrice.mul(2);
 
         const destDVN = new ethers.Contract(
             networkDetails.OmnixDVNAddress,
@@ -309,47 +323,6 @@ export class DemoRoute {
 
         const nonce = await signer.getTransactionCount();
 
-        // VERIFY
-        const verifyData = await destDVN.populateTransaction.verify(
-            packet.message,
-            packet.nonce,
-            packet.srcEid,
-            packet.sender,
-            packet.dstEid,
-            packet.receiver
-        )
-        const verifyTx = {
-            from: signer.address,
-            to: networkDetails.OmnixDVNAddress,
-            data: verifyData.data,
-            gasLimit: ethers.BigNumber.from(500000),
-            gasPrice: gasPrice,
-            nonce: nonce,
-            chainId: networkDetails.chainId
-        }
-        const verifySignedTx = await signer.signTransaction(verifyTx);
-
-        // COMMIT
-        const commitData = await destDVN.populateTransaction.commit(
-            packet.message,
-            packet.nonce,
-            packet.srcEid,
-            packet.sender,
-            packet.dstEid,
-            packet.receiver
-        )
-        const commitTx = {
-            from: signer.address,
-            to: networkDetails.OmnixDVNAddress,
-            data: commitData.data,
-            gasLimit: ethers.BigNumber.from(500000),
-            gasPrice: gasPrice.sub(1),
-            nonce: nonce + 1,
-            chainId: networkDetails.chainId
-        }
-        const commitSignedTx = await signer.signTransaction(commitTx);
-
-        // EXECUTE
         const lzReceiveParam = {
             origin: {
                 srcEid: packet.srcEid,
@@ -362,8 +335,53 @@ export class DemoRoute {
             extraData: '0x',
             gas: 200000,
             value: 0,
-        }
-        const executeData = await destExecutor.populateTransaction.commitAndExecute(networkDetails.ReceiveULN302Address, lzReceiveParam, []);
+        };
+
+        // Generate all transaction data in parallel
+        const [verifyData, commitData, executeData] = await Promise.all([
+            destDVN.populateTransaction.verify(
+                packet.message,
+                packet.nonce,
+                packet.srcEid,
+                packet.sender,
+                packet.dstEid,
+                packet.receiver
+            ),
+            destDVN.populateTransaction.commit(
+                packet.message,
+                packet.nonce,
+                packet.srcEid,
+                packet.sender,
+                packet.dstEid,
+                packet.receiver
+            ),
+            destExecutor.populateTransaction.commitAndExecute(
+                networkDetails.ReceiveULN302Address,
+                lzReceiveParam,
+                []
+            )
+        ]);
+
+        // Build transaction objects
+        const verifyTx = {
+            from: signer.address,
+            to: networkDetails.OmnixDVNAddress,
+            data: verifyData.data,
+            gasLimit: ethers.BigNumber.from(500000),
+            gasPrice: gasPrice,
+            nonce: nonce,
+            chainId: networkDetails.chainId
+        };
+
+        const commitTx = {
+            from: signer.address,
+            to: networkDetails.OmnixDVNAddress,
+            data: commitData.data,
+            gasLimit: ethers.BigNumber.from(500000),
+            gasPrice: gasPrice.sub(1),
+            nonce: nonce + 1,
+            chainId: networkDetails.chainId
+        };
 
         const executeTx = {
             from: signer.address,
@@ -373,8 +391,14 @@ export class DemoRoute {
             gasPrice: gasPrice.sub(2),
             nonce: nonce + 2,
             chainId: networkDetails.chainId
-        }
-        const executeSignedTx = await signer.signTransaction(executeTx);
+        };
+
+        // Sign all transactions in parallel
+        const [verifySignedTx, commitSignedTx, executeSignedTx] = await Promise.all([
+            signer.signTransaction(verifyTx),
+            signer.signTransaction(commitTx),
+            signer.signTransaction(executeTx)
+        ]);
 
         // Send transactions at the same time:
         const [verifyTxResponse, commitTxResponse, executeTxResponse] = await Promise.all([
@@ -389,8 +413,9 @@ export class DemoRoute {
             executeTxResponse.wait(),
         ]);
 
-        logInfo(`Destination transactions confirmed: verify, commit, and execute completed`);;
+        logInfo(`[DEMO] Destination transactions confirmed: verify, commit, and execute completed`);
 
+        this.demoRunning = false;
         return {
             verifyTxHash: verifyTxResponse.hash,
             commitTxHash: commitTxResponse.hash,

@@ -1,11 +1,14 @@
 import { Router } from "express";
-import { buildTransferAuthorizationDigest, checkIfDestHasEnoughUSDC, decodePacket, getChainNameById, logError, logInfo } from "../utils";
+import { buildTransferAuthorizationDigest, checkIfDestHasEnoughUSDC, decodePacket, getChainNameById, logError, logInfo, logSuccess } from "../utils";
 import { ethers } from "ethers";
 import { AUTHORIZED_NETWORKS, EXTRA_USDO, networkDetail, NETWORKS_DETAILS, PacketData, WALLET, x402Payload } from "../const";
 import usdoABI from "../abis/usdo.abi.json";
 import omnixExecutorABI from "../abis/omnixExecutor.abi.json";
 import omnixDVNABI from "../abis/omnixDVN.abi.json";
 import { CallRepository } from "../repositories/call.repository";
+import { wrapFetchWithPayment, decodeXPaymentResponse } from "x402-fetch";
+import { CdpClient } from "@coinbase/cdp-sdk";
+import { toAccount } from "viem/accounts";
 
 export class EndpointRoute {
     public router: Router = Router();
@@ -43,21 +46,26 @@ export class EndpointRoute {
         }
 
         try {
-            // Fetch endpoint by calling it
+            logInfo(`Fetching endpoint requirements from: ${endpoint}`);
+
             const response = await fetch(endpoint, {
                 method: 'GET'
             });
 
-            console.log(response)
-
             const body = await response.json();
-
-            console.log(body)
-
             const sourceAccept = body.accepts[0];
+
+            // If source and destination networks are the same, just forward the response
+            if (network === sourceAccept.network) {
+                logInfo(`Same network detected (${network}), forwarding requirements as-is`);
+                return res.status(402).json(body);
+            }
 
             const sourceNetworkDetails = NETWORKS_DETAILS[network];
             const destNetworkDetails = NETWORKS_DETAILS[sourceAccept.network];
+
+            logInfo(`Payment required: ${ethers.BigNumber.from(sourceAccept.maxAmountRequired).div(10 ** 6).toString()} USDC`);
+            logInfo(`Source: ${network}, Destination: ${sourceAccept.network}`);
 
             const hasEnoughUSDC = await checkIfDestHasEnoughUSDC(
                 destNetworkDetails,
@@ -93,11 +101,12 @@ export class EndpointRoute {
                 ]
             );
 
+            logInfo(`Endpoint requirements prepared for ${network}`);
+
             res.status(402).json({
                 ...body
             });
         } catch (error) {
-            console.log(error);
             logError(`Error fetching endpoint requirements: ${error}`);
             res.status(500).json({ error: 'Internal Server Error' });
         }
@@ -107,17 +116,45 @@ export class EndpointRoute {
     private processx402Call = async (req: any, res: any) => {
         const { endpoint } = req.query;
         try {
+            logInfo(`Processing X402 payment for endpoint: ${endpoint}`);
+
             const payload = req.headers['x-payment'];
 
             // decode payload in base64 and put it as a json
             const decodedPayload = Buffer.from(payload, 'base64').toString('utf-8');
             const payloadJson = JSON.parse(decodedPayload) as x402Payload;
 
+            // Check if this is a same-network payment (no cross-chain needed)
             if (!payloadJson.payload.authorization.data) {
-                logError(`Missing authorization data in payload`);
-                return res.status(400).json({ error: 'Invalid payload: missing authorization data' });
+                // Same network: just forward the payment to the endpoint
+                logInfo(`Same network payment detected, forwarding to endpoint`);
+
+                try {
+                    const base64Payload = Buffer.from(JSON.stringify(payloadJson)).toString('base64');
+
+                    const response = await fetch(endpoint, {
+                        method: 'GET',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-Payment': base64Payload
+                        },
+                    });
+
+                    const body = await response.json();
+                    const xPaymentResponse = response.headers.get('X-Payment-Response');
+
+                    logSuccess(`Same network payment completed successfully`);
+
+                    res.setHeader('X-Payment-Response', xPaymentResponse);
+                    res.status(200).json(body);
+                } catch (error) {
+                    logError(`Error forwarding same network payment: ${error}`);
+                    res.status(500).json({ error: 'Error processing payment' });
+                }
+                return;
             }
 
+            // Cross-chain payment flow
             const [omnixRouterAddress, innerBytes] =
                 ethers.utils.defaultAbiCoder.decode(
                     ['address', 'bytes'],
@@ -132,14 +169,16 @@ export class EndpointRoute {
             const destNetworkDetails = NETWORKS_DETAILS[getChainNameById(destChainId)];
             const sourceNetworkDetails = NETWORKS_DETAILS[payloadJson.network];
 
+            logInfo(`Payment: ${ethers.BigNumber.from(payloadJson.payload.authorization.value).div(10 ** 6).toString()} USDC`);
+            logInfo(`Source: ${payloadJson.network}, Destination: ${getChainNameById(destChainId)}`);
+            logInfo(`Submitting source payment transaction...`);
+
             const sourceProvider = new ethers.providers.JsonRpcProvider(sourceNetworkDetails.rpcUrl);
             const sourceUSDOContract = new ethers.Contract(
                 sourceNetworkDetails.USDOAddress,
                 usdoABI,
                 sourceProvider
             );
-
-            console.log(payloadJson)
 
             const { v, r, s } = ethers.utils.splitSignature(payloadJson.payload.signature);
 
@@ -155,7 +194,7 @@ export class EndpointRoute {
             );
 
             const currentGasPrice = await sourceProvider.getGasPrice()
-            const gasPrice = currentGasPrice.mul(3).div(2);
+            const gasPrice = currentGasPrice.mul(2);
             const signer = WALLET.connect(sourceProvider);
 
             const tx = {
@@ -177,7 +216,10 @@ export class EndpointRoute {
             });
 
             const txResponse = await sourceProvider.sendTransaction(signedTx);
+            logInfo(`Source payment submitted: ${txResponse.hash}`);
+
             const receipt = await txResponse.wait();
+            logInfo(`Source payment confirmed on ${payloadJson.network}`);
 
             const ENDPOINT_ABI = ['event PacketSent(bytes encodedPayload, bytes options, address sendLibrary)']
 
@@ -198,33 +240,48 @@ export class EndpointRoute {
             }
 
             if (!packetSentEventData) {
-                logError(`PacketSent event not found in transaction logs.`);
+                logError(`PacketSent event not found in transaction logs`);
                 return res.status(500).json({ error: 'Internal Server Error' });
             }
+
+            logInfo(`Processing cross-chain message on ${getChainNameById(destChainId)}...`);
 
             try {
                 await this.processPacket(destNetworkDetails, packetSentEventData, receipt.transactionHash);
 
-                const responsePayload = await this.buildResponsePayload(payloadJson, destNetworkDetails, endpointReceiver);
+                logSuccess(`Cross-chain execution completed successfully`);
+                logInfo(`Requesting protected resource with X402 payment proof...`);
 
-                const base64Payload = Buffer.from(JSON.stringify(responsePayload)).toString('base64');
+                // Build response payload and call the API
+                try {
 
-                const response = await fetch(endpoint, {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-Payment': base64Payload
-                    },
-                });
+                    const cdp = new CdpClient();
+                    const cdpAccount = await cdp.evm.getOrCreateAccount({
+                        name: "Omnix402Signer"
+                    });
 
-                const responseBody = await response.json();
-                const xPaymentResponse = response.headers.get('X-Payment-Response');
+                    const account = toAccount(cdpAccount);
+                    const fetchWithPayment = wrapFetchWithPayment(fetch, account);
 
-                res.setHeader('X-Payment-Response', xPaymentResponse);
+                    const response = await fetchWithPayment(endpoint, {
+                        method: "GET",
+                    })
 
-                res.status(200).json(responseBody);
+                    const body = await response.json();
+                    const paymentResponse = decodeXPaymentResponse(response.headers.get("x-payment-response")!);
+
+                    logSuccess(`X402 flow completed successfully!`);
+                    logSuccess(`Protected resource accessed with payment proof`);
+                    logInfo(`Payment response: ${JSON.stringify(paymentResponse)}`);
+
+                    res.setHeader('X-Payment-Response', response.headers.get('X-Payment-Response'));
+                    res.status(200).json(body);
+                } catch (error) {
+                    logError(`Error calling API for endpoint ${endpoint}: ${error}`);
+                    res.status(500).json({ error: 'Error accessing protected resource' });
+                }
             } catch (error) {
-                console.log(error);
+                logError(`Error during cross-chain bridge execution: ${error}`);
                 res.status(500).json({ error: 'Internal Server Error during bridge' });
             }
 
@@ -233,45 +290,6 @@ export class EndpointRoute {
             res.status(500).json({ error: 'Internal Server Error' });
         }
     }
-
-    async buildResponsePayload(
-        originalPayload: x402Payload,
-        destNetworkDetails: networkDetail,
-        endpointReceiver: string
-    ): Promise<x402Payload> {
-        const now = new Date();
-        const nonce = ethers.utils.hexlify(ethers.utils.randomBytes(32));
-
-        const digest = buildTransferAuthorizationDigest(
-            WALLET.address,
-            endpointReceiver,
-            originalPayload.payload.authorization.value,
-            Math.floor(now.getTime() / 1000),
-            Math.floor((now.getTime() / 1000) + 3600),
-            nonce
-        )
-        const signature = await WALLET.signMessage(ethers.utils.arrayify(digest));
-
-        const responsePayload: x402Payload = {
-            x402Version: 1,
-            scheme: 'exact',
-            network: destNetworkDetails.name,
-            payload: {
-                signature: signature,
-                authorization: {
-                    from: WALLET.address,
-                    to: endpointReceiver,
-                    value: originalPayload.payload.authorization.value,
-                    validAfter: Math.floor(now.getTime() / 1000).toString(),
-                    validBefore: (Math.floor((now.getTime() / 1000) + 3600)).toString(),
-                    nonce: nonce,
-                },
-            }
-        }
-
-        return responsePayload;
-    }
-
 
     async processPacket(
         networkDetails: networkDetail,
@@ -283,7 +301,7 @@ export class EndpointRoute {
         const signer = WALLET.connect(provider);
 
         const currentGasPrice = await provider.getGasPrice()
-        const gasPrice = currentGasPrice.mul(3).div(2);
+        const gasPrice = currentGasPrice.mul(2);
 
         const destDVN = new ethers.Contract(
             networkDetails.OmnixDVNAddress,
@@ -378,6 +396,6 @@ export class EndpointRoute {
             executeTxResponse.wait(),
         ]);
 
-        logInfo(`Processed packet on chainId ${networkDetails.chainId} for receiver ${packet.receiver} from source tx ${sourceTxHash}`);
+        logInfo(`Destination transactions confirmed: verify, commit, and execute completed`);
     }
 }
