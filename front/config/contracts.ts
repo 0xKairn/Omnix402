@@ -1,8 +1,8 @@
 import { Address } from "viem";
 
 export const USDO_ADDRESS: Record<number, Address> = {
-  8453: "0x5FAC7F2c99d9e06deff2f579FDE67a2eCDf0E0aC", // Base
-  137: "0x5FAC7F2c99d9e06deff2f579FDE67a2eCDf0E0aC", // Polygon
+  8453: "0x5f04315f7574ef5b5f91113d6811d199bd987df3", // Base
+  137: "0x5f04315f7574ef5b5f91113d6811d199bd987df3", // Polygon
 };
 
 export const USDO_ABI = [

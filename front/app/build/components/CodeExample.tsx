@@ -38,24 +38,24 @@ const response = await fetch(
 
   return (
     <div className="bg-white/5 border border-white/10">
-      <div className="border-b border-white/10 px-6 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <span className="text-xs font-mono text-white/60 uppercase tracking-wider">
+      <div className="border-b border-white/10 px-3 sm:px-4 md:px-6 py-3 md:py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 min-w-0">
+          <span className="text-xs font-mono text-white/60 uppercase tracking-wider shrink-0">
             API Usage Example
           </span>
-          <span className="text-xs font-mono text-white/40">
+          <span className="text-xs font-mono text-white/40 truncate">
             // Call endpoint on Base from Polygon
           </span>
         </div>
         <button
           onClick={copyToClipboard}
-          className="px-3 py-1 text-xs font-mono uppercase tracking-wider border border-white/20 hover:bg-white hover:text-black transition-all"
+          className="px-3 py-1.5 text-xs font-mono uppercase tracking-wider border border-white/20 hover:bg-white hover:text-black transition-all shrink-0 w-full sm:w-auto"
         >
           {copied ? "✓ Copied" : "Copy Code"}
         </button>
       </div>
-      <div className="p-8 bg-black">
-        <pre className="text-sm font-mono overflow-x-auto leading-loose">
+      <div className="p-4 sm:p-6 md:p-8 bg-black overflow-x-auto">
+        <pre className="text-xs sm:text-sm font-mono leading-relaxed sm:leading-loose whitespace-pre">
           <span className="text-white/50">
             // Step 1: Get payment requirements from Omnix402
           </span>
