@@ -27,20 +27,20 @@ export async function checkIfDestHasEnoughUSDC(
 ): Promise<boolean> {
     try {
         const provider = new ethers.providers.JsonRpcProvider(networkDetail.rpcUrl);
-        const usdoContract = new ethers.Contract(
-            networkDetail.USDOAddress,
+        const usdcContract = new ethers.Contract(
+            networkDetail.USDCAddress,
             [
                 'function balanceOf(address owner) view returns (uint256)'
             ],
             provider
         );
 
-        const balance: ethers.BigNumber = await usdoContract.balanceOf(networkDetail.USDOAddress);
+        const balance: ethers.BigNumber = await usdcContract.balanceOf(networkDetail.USDOAddress);
         const amountBN = ethers.BigNumber.from(amount);
 
         return balance.gte(amountBN);
     } catch (error) {
-        logError(`Error checking USDO balance: ${error}`);
+        logError(`Error checking USDC balance: ${error}`);
         return false;
     }
 }
