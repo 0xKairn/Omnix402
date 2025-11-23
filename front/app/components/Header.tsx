@@ -49,7 +49,7 @@ export default function Header({ showConnectWallet = false }: HeaderProps) {
             {!showConnectWallet && (
               <>
                 <Link
-                  href="https://ethglobal.com"
+                  href="https://ethglobal.com/showcase/omnix402-hkrwm"
                   target="_blank"
                   className="flex items-center gap-1.5 md:gap-2 text-[10px] md:text-xs font-bold uppercase tracking-wider md:tracking-widest text-white/60 hover:text-white transition-colors cursor-pointer group"
                 >

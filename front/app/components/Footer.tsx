@@ -12,7 +12,7 @@ export default function Footer() {
 
           <div className="flex items-center gap-8">
             <Link
-              href="https://ethglobal.com"
+              href="https://ethglobal.com/showcase/omnix402-hkrwm"
               target="_blank"
               className="flex items-center gap-3 text-sm text-white/60 hover:text-white transition-all duration-200 group"
             >

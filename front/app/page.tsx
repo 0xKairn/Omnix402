@@ -67,7 +67,7 @@ export default function Home() {
               </Link>
 
               <a
-                href="https://github.com/0xKairn/Omnix402"
+                href="https://ethglobal.com/showcase/omnix402-hkrwm"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-full sm:w-auto"
